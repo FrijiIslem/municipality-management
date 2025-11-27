@@ -14,10 +14,10 @@ import com.projetJEE.projetJEE.enums.EtatTournee;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Tournee {
     @Id private String id;
-    private List<String> conteneur;
-    private String agent;
+    private List<Conteneur> conteneur;
+    private Agent agent;
     private LocalDateTime dateDebut;
     private String itineraire;
     private EtatTournee etat;
-    private String vehicule;
+    private Vehicule vehicule;
 }
