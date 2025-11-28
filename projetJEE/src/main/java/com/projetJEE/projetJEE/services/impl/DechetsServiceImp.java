@@ -1,9 +1,9 @@
-package com.projetJEE.projetJEE.service.imp;
+package com.projetJEE.projetJEE.services.impl;
 
 import com.projetJEE.projetJEE.dto.DechetsDTO;
-import com.projetJEE.projetJEE.entity.Dechets;
+import com.projetJEE.projetJEE.entities.Dechets;
 import com.projetJEE.projetJEE.repository.DechetsRepository;
-import com.projetJEE.projetJEE.service.DechetsService;
+import com.projetJEE.projetJEE.services.DechetsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

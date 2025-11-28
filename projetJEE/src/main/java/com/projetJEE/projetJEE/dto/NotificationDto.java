@@ -2,7 +2,7 @@ package com.projetJEE.projetJEE.dto;
 
 import java.time.LocalDateTime;
 
-import com.projetJEE.projetJEE.enums.TypeNotification;
+import com.projetJEE.projetJEE.entities.enums.TypeNotification;
 
 import lombok.Builder;
 import lombok.Data;

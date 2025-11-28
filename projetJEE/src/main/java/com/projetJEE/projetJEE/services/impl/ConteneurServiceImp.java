@@ -1,8 +1,8 @@
-package com.projetJEE.projetJEE.service.imp;
+package com.projetJEE.projetJEE.services.impl;
 
-import com.projetJEE.projetJEE.entity.Conteneur;
+import com.projetJEE.projetJEE.entities.Conteneur;
 import com.projetJEE.projetJEE.repository.ConteneurRepository;
-import com.projetJEE.projetJEE.service.ConteneurService;
+import com.projetJEE.projetJEE.services.ConteneurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

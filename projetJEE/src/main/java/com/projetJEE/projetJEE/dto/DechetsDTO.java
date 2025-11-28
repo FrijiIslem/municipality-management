@@ -1,6 +1,6 @@
 package com.projetJEE.projetJEE.dto;
 
-import com.projetJEE.projetJEE.entity.enums.TypeDechets;
+import com.projetJEE.projetJEE.entities.enums.TypeDechets;
 import lombok.Data;
 
 @Data

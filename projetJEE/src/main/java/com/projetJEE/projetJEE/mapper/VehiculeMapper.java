@@ -1,7 +1,7 @@
 package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.VehiculeDTO;
-import com.projetJEE.projetJEE.entity.Vehicule;
+import com.projetJEE.projetJEE.entities.Vehicule;
 import org.springframework.stereotype.Component;
 
 @Component

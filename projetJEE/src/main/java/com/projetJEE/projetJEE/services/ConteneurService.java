@@ -1,6 +1,6 @@
-package com.projetJEE.projetJEE.service;
+package com.projetJEE.projetJEE.services;
 
-import com.projetJEE.projetJEE.entity.Conteneur;
+import com.projetJEE.projetJEE.entities.Conteneur;
 import java.util.List;
 
 public interface ConteneurService {

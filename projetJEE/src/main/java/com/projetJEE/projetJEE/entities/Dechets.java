@@ -1,6 +1,6 @@
-package com.projetJEE.projetJEE.entity;
+package com.projetJEE.projetJEE.entities;
 
-import com.projetJEE.projetJEE.entity.enums.TypeDechets;
+import com.projetJEE.projetJEE.entities.enums.TypeDechets;
 import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.controller;
+package com.projetJEE.projetJEE.controllers;
 
 import java.util.List;
 
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.projetJEE.projetJEE.dto.DechetsDTO;
-import com.projetJEE.projetJEE.entity.Dechets;
-import com.projetJEE.projetJEE.service.DechetsService;
+import com.projetJEE.projetJEE.entities.Dechets;
+import com.projetJEE.projetJEE.services.DechetsService;
 
 import lombok.RequiredArgsConstructor;
 

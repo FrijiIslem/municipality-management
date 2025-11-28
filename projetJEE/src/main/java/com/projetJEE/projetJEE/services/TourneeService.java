@@ -8,4 +8,8 @@ public interface TourneeService {
     List<TourneeDto> getAllTournees();
     TourneeDto getTourneeById(String id);
     void deleteTournee(String id);
+    
+    List<TourneeDto> getTourneesByAgent(String agentId);
+    List<TourneeDto> getTourneesByEtat(String etat);
+
 }

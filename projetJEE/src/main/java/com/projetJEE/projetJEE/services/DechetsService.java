@@ -1,7 +1,7 @@
-package com.projetJEE.projetJEE.service;
+package com.projetJEE.projetJEE.services;
 
 import com.projetJEE.projetJEE.dto.DechetsDTO;
-import com.projetJEE.projetJEE.entity.Dechets;
+import com.projetJEE.projetJEE.entities.Dechets;
 import java.util.List;
 
 public interface DechetsService {

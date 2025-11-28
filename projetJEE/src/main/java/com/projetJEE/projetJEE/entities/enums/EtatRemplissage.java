@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.entity.enums;
+package com.projetJEE.projetJEE.entities.enums;
 
 public enum EtatRemplissage {
 	vide,

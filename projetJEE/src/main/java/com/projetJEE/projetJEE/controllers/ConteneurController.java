@@ -1,7 +1,7 @@
-package com.projetJEE.projetJEE.controller;
+package com.projetJEE.projetJEE.controllers;
 
-import com.projetJEE.projetJEE.entity.Conteneur;
-import com.projetJEE.projetJEE.service.ConteneurService;
+import com.projetJEE.projetJEE.entities.Conteneur;
+import com.projetJEE.projetJEE.services.ConteneurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

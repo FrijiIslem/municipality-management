@@ -1,11 +1,14 @@
 package com.projetJEE.projetJEE.config;
 
 import com.projetJEE.projetJEE.entities.Tournee;
+import com.projetJEE.projetJEE.entities.Vehicule;
+import com.projetJEE.projetJEE.entities.Agent;
+import com.projetJEE.projetJEE.entities.Conteneur;
 import com.projetJEE.projetJEE.entities.Notification;
-import com.projetJEE.projetJEE.enums.EtatTournee;
-import com.projetJEE.projetJEE.enums.TypeNotification;
-import com.projetJEE.projetJEE.repositories.TourneeRepository;
-import com.projetJEE.projetJEE.repositories.NotificationRepository;
+import com.projetJEE.projetJEE.entities.enums.EtatTournee;
+import com.projetJEE.projetJEE.entities.enums.TypeNotification;
+import com.projetJEE.projetJEE.repository.TourneeRepository;
+import com.projetJEE.projetJEE.repository.NotificationRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
@@ -31,15 +34,18 @@ public class DataInitializer implements CommandLineRunner {
         tourneeRepository.deleteAll();
         notificationRepository.deleteAll();
         System.out.println("🧹 Collections vidées");
-
+		Conteneur c1 = null;
+		Conteneur c5 = null;
+		Agent A1 = null;
+		Vehicule V1 = null;
         // 1. CREATE Tournee T001
         Tournee t = Tournee.builder()
                 .id("T001")
-                .conteneur(Arrays.asList("C1", "C5"))
-                .agent("A1")
+                .conteneur(Arrays.asList(c1, c5))
+                .agent(A1)
                 .etat(EtatTournee.PLANIFIEE)
                 .itineraire("C5→C1 GPS")
-                .vehicule("V1")
+                .vehicule(V1)
                 .dateDebut(LocalDateTime.now())
                 .build();
         t = tourneeRepository.save(t);

@@ -1,8 +1,8 @@
 package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.ConteneurDTO;
-import com.projetJEE.projetJEE.entity.Conteneur;
-import com.projetJEE.projetJEE.entity.Dechets;
+import com.projetJEE.projetJEE.entities.Conteneur;
+import com.projetJEE.projetJEE.entities.Dechets;
 import org.springframework.stereotype.Component;
 
 @Component

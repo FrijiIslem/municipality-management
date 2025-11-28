@@ -3,7 +3,7 @@ package com.projetJEE.projetJEE.services.impl;
 import com.projetJEE.projetJEE.dto.TourneeDto;
 import com.projetJEE.projetJEE.entities.Tournee;
 import com.projetJEE.projetJEE.mapper.TourneeMapper;
-import com.projetJEE.projetJEE.repositories.TourneeRepository;
+import com.projetJEE.projetJEE.repository.TourneeRepository;
 import com.projetJEE.projetJEE.services.TourneeService;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -23,12 +23,12 @@ public class TourneeServiceImpl implements TourneeService {
     public TourneeDto createTournee(TourneeDto dto) {
         Tournee entity = tourneeMapper.toEntity(dto);
         Tournee saved = tourneeRepository.save(entity);
-        return tourneeMapper.toDto(saved);
+        return tourneeMapper.toDTO(saved);
     }
 
     @Override
     public List<TourneeDto> getAllTournees() {
-        return tourneeMapper.toDtoList(tourneeRepository.findAll());
+        return tourneeMapper.toDTO(tourneeRepository.findAll());
     }
 
     @Override
@@ -42,4 +42,16 @@ public class TourneeServiceImpl implements TourneeService {
     public void deleteTournee(String id) {
         tourneeRepository.deleteById(id);
     }
+
+	@Override
+	public List<TourneeDto> getTourneesByAgent(String agentId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<TourneeDto> getTourneesByEtat(String etat) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

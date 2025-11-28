@@ -1,7 +1,7 @@
-package com.projetJEE.projetJEE.entity;
+package com.projetJEE.projetJEE.entities;
 
-import com.projetJEE.projetJEE.entity.enums.CouleurStatut;
-import com.projetJEE.projetJEE.entity.enums.EtatRemplissage;
+import com.projetJEE.projetJEE.entities.enums.CouleurStatut;
+import com.projetJEE.projetJEE.entities.enums.EtatRemplissage;
 import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

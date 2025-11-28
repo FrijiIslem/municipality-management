@@ -1,8 +1,8 @@
 package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.RecyclageDTO;
-import com.projetJEE.projetJEE.entity.Dechets;
-import com.projetJEE.projetJEE.entity.Recyclage;
+import com.projetJEE.projetJEE.entities.Dechets;
+import com.projetJEE.projetJEE.entities.Recyclage;
 import com.projetJEE.projetJEE.repository.DechetsRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;

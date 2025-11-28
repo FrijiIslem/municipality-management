@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.repositories;
+package com.projetJEE.projetJEE.repository;
 
 import com.projetJEE.projetJEE.entities.Tournee;
 import org.springframework.data.mongodb.repository.MongoRepository;

@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.controller;
+package com.projetJEE.projetJEE.controllers;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.projetJEE.projetJEE.dto.RecyclageDTO;
-import com.projetJEE.projetJEE.service.RecyclageService;
+import com.projetJEE.projetJEE.services.RecyclageService;
 
 import lombok.RequiredArgsConstructor;
 

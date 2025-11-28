@@ -1,6 +1,6 @@
-package com.projetJEE.projetJEE.service;
+package com.projetJEE.projetJEE.services;
 
-import com.projetJEE.projetJEE.entity.Vehicule;
+import com.projetJEE.projetJEE.entities.Vehicule;
 import java.util.List;
 
 public interface VehiculeService {

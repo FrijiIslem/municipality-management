@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.enums;
+package com.projetJEE.projetJEE.entities.enums;
 
 public enum EtatTournee {
     PLANIFIEE,

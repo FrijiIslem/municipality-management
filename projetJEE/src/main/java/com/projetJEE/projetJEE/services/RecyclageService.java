@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.service;
+package com.projetJEE.projetJEE.services;
 
 import com.projetJEE.projetJEE.dto.RecyclageDTO;
 

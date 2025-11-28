@@ -1,8 +1,8 @@
-package com.projetJEE.projetJEE.service.imp;
+package com.projetJEE.projetJEE.services.impl;
 
-import com.projetJEE.projetJEE.entity.Vehicule;
+import com.projetJEE.projetJEE.entities.Vehicule;
 import com.projetJEE.projetJEE.repository.VehiculeRepository;
-import com.projetJEE.projetJEE.service.VehiculeService;
+import com.projetJEE.projetJEE.services.VehiculeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

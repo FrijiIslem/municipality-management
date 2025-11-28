@@ -1,7 +1,7 @@
-package com.projetJEE.projetJEE.controller;
+package com.projetJEE.projetJEE.controllers;
 
-import com.projetJEE.projetJEE.entity.Vehicule;
-import com.projetJEE.projetJEE.service.VehiculeService;
+import com.projetJEE.projetJEE.entities.Vehicule;
+import com.projetJEE.projetJEE.services.VehiculeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

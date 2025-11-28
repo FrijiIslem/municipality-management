@@ -1,4 +1,4 @@
-package com.projetJEE.projetJEE.entity;
+package com.projetJEE.projetJEE.entities;
 
 import lombok.Data;
 import lombok.Builder;

@@ -1,6 +1,8 @@
-package com.projetJEE.projetJEE.repositories;
+package com.projetJEE.projetJEE.repository;
 
 import com.projetJEE.projetJEE.entities.Notification;
+import com.projetJEE.projetJEE.entities.enums.TypeNotification;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -12,5 +14,5 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     List<Notification> findByDestination(String destination);
 
     // trouver par type (alert, reminder, succes...)
-    List<Notification> findByType(String type);
+    List<Notification> findByType(TypeNotification type);
 }

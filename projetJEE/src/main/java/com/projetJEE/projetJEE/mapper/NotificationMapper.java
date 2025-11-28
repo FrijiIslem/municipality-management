@@ -18,7 +18,6 @@ public class NotificationMapper {
                 .destination(n.getDestination())
                 .message(n.getMessage())
                 .type(n.getType())
-                .tourneeId(n.getTourneeId())
                 .build();
     }
 
@@ -30,7 +29,6 @@ public class NotificationMapper {
                 .destination(dto.getDestination())
                 .message(dto.getMessage())
                 .type(dto.getType())
-                .tourneeId(dto.getTourneeId())
                 .build();
     }
 
