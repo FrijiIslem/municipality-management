@@ -10,19 +10,17 @@ import java.util.Optional;
 @Repository
 public interface AgentRepository extends MongoRepository<Agent, String> {
 
+    java.util.Optional<Agent> findByEmail(String email);
+
     // Trouver agent par nom (LIKE)
     List<Agent> findByNomContainingIgnoreCase(String nom);
 
     // Trouver agents disponibles (pas en tournée)
-    List<Agent> findByDisponibleTrue();
+    List<Agent> findByDisponibiliteTrue();
 
     // Trouver par téléphone
-    Optional<Agent> findByTelephone(String telephone);
-
-    // Query personnalisée : agents par région
-    @Query("{ 'region' : ?0 }")
-    List<Agent> findByRegion(String region);
-
-    // Compter agents actifs
-    long countByActifTrue();
+    Optional<Agent> findByNumeroTel(Long numeroTel);
+    Optional<Agent> findFirstByTacheAndDisponibiliteTrue(String tache);
+    List<Agent> findByTacheAndDisponibiliteTrue(String tache);
+    List<Agent> findByTache(String tache);
 }

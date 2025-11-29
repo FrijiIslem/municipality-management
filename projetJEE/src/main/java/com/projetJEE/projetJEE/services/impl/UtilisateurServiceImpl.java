@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Citoyen;
 import com.projetJEE.projetJEE.entities.Incident;
+import com.projetJEE.projetJEE.repository.AgentRepository;
+import com.projetJEE.projetJEE.repository.CitoyenRepository;
 import com.projetJEE.projetJEE.repository.IncidentRepository;
 import com.projetJEE.projetJEE.repository.UtilisateurRepository;
 import com.projetJEE.projetJEE.services.UtilisateurServiceInterface;
@@ -17,20 +19,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
-    private final UtilisateurRepository utilisateurRepository;
+    private final AgentRepository agentRepository;
+    private final CitoyenRepository citoyenRepository;
     private final IncidentRepository incidentRepository;
 
 	@Override
 	public boolean authentifier(String email, String password) {
-	    return utilisateurRepository.findByEmail(email)
-	            .filter(u -> u.getPassword().equals(password))
-	            .isPresent();
+	    return agentRepository.findByEmail(email).filter(a -> a.getPassword().equals(password)).isPresent() ||
+	           citoyenRepository.findByEmail(email).filter(c -> c.getPassword().equals(password)).isPresent();
 	}
 
 	@Override
 	public Citoyen ajouterCitoyen(Citoyen citoyen) {
-		// TODO Auto-generated method stub
-		return null;
+		return citoyenRepository.save(citoyen);
 	}
 
 	@Override
@@ -71,8 +72,7 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
 	@Override
 	public Agent ajouterUnAgent(Agent agent) {
-		// TODO Auto-generated method stub
-		return null;
+		return agentRepository.save(agent);
 	}
 
 	@Override

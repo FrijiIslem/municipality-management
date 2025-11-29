@@ -9,17 +9,20 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.projetJEE.projetJEE.dto.AgentDTO;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Tournee {
     @Id private String id;
     private List<Conteneur> conteneur;
-    private AgentDTO agentChauffeur;           // ✅ Objet COMPLET
-    private List<AgentDTO> agentRammasseurs;
+    @DBRef
+    private Agent agentChauffeur;
+    @DBRef
+    private List<Agent> agentRamasseurs;
     private LocalDateTime dateDebut;
     private String itineraire;
     private EtatTournee etat;
     private Vehicule vehicule;
+    private LocalDateTime dateFin;
 }

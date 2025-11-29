@@ -40,8 +40,8 @@ public class TourneeController {
 
     // Supprimer une tournée
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTournee(@PathVariable String id) {
-        tourneeService.deleteTournee(id);
+    public ResponseEntity<Void> supprimerTournee(@PathVariable String id) {
+        tourneeService.supprimerTournee(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -55,5 +55,50 @@ public class TourneeController {
     @GetMapping("/etat/{etat}")
     public ResponseEntity<List<TourneeDto>> getTourneesByEtat(@PathVariable String etat) {
         return ResponseEntity.ok(tourneeService.getTourneesByEtat(etat));
+    }
+
+    // Planifier une tournée
+    @PostMapping("/planifier")
+    public ResponseEntity<TourneeDto> planifierTournee(@RequestBody TourneeDto tourneeDto) {
+        return ResponseEntity.ok(tourneeService.planifierTournee(tourneeDto));
+    }
+
+    // Affecter un agent à une tournée
+    @PutMapping("/{id}/affecter/{agentId}")
+    public ResponseEntity<Void> affecterTournee(@PathVariable String id, @PathVariable String agentId) {
+        tourneeService.affecterTournee(id, agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Modifier une tournée
+    @PutMapping("/")
+    public ResponseEntity<TourneeDto> modifierTournee(@RequestBody TourneeDto tourneeDto) {
+        return ResponseEntity.ok(tourneeService.modifierTournee(tourneeDto));
+    }
+
+    // Valider une tournée
+    @PutMapping("/{id}/valider")
+    public ResponseEntity<Void> validerTournee(@PathVariable String id) {
+        tourneeService.validerTournee(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Libérer une tournée
+    @PutMapping("/{id}/liberer")
+    public ResponseEntity<Void> libererTournee(@PathVariable String id) {
+        tourneeService.libererTournee(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Obtenir la durée d'une tournée
+    @GetMapping("/{id}/duree")
+    public ResponseEntity<Long> getDureeTournee(@PathVariable String id) {
+        return ResponseEntity.ok(tourneeService.getDureeTournee(id));
+    }
+
+    // Obtenir la durée moyenne des tournées
+    @GetMapping("/duree/moyenne")
+    public ResponseEntity<Double> getMoyenneDureeTournees() {
+        return ResponseEntity.ok(tourneeService.moyenneDureeTournees());
     }
 }

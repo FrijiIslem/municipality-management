@@ -42,7 +42,7 @@ public class DataInitializer implements CommandLineRunner {
         Tournee t = Tournee.builder()
                 .id("T001")
                 .conteneur(Arrays.asList(c1, c5))
-                .agent(A1)
+                .agentChauffeur(A1)
                 .etat(EtatTournee.PLANIFIEE)
                 .itineraire("C5→C1 GPS")
                 .vehicule(V1)

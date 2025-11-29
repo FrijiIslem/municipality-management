@@ -6,18 +6,21 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 
-import com.projetJEE.projetJEE.entities.Agent;
+
+import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 
 @Data @NoArgsConstructor @Builder
+@AllArgsConstructor
 public class TourneeDto {
-    private Integer id;                    // ✅ Integer
-    private List<Integer> conteneurIds;    // ✅ Integer List
-    private Agent agentChauffeurId;      // ✅ Chauffeur ID
-    private List<Agent> agentRamasseurIds;
-    private LocalDateTime dateDebut;       // ✅ Pour mapper
-    private LocalDateTime fin;
-    private Map<String, Object> itineraire;
-    private String statut;                 // ✅ String pour JSON
-    private Integer vehiculeId;            // ✅ Integer
+    private String id;
+    private List<ConteneurDTO> conteneurs;
+    private AgentDTO agentChauffeur;
+    private List<AgentDTO> agentRamasseurs;
+    private LocalDateTime dateDebut;
+    private LocalDateTime dateFin;
+    private String itineraire;
+    private EtatTournee etat;
+    private VehiculeDTO vehicule;
 }
