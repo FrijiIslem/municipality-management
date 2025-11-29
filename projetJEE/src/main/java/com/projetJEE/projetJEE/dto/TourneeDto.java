@@ -1,18 +1,20 @@
 package com.projetJEE.projetJEE.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 
-
+import java.time.LocalDateTime;
+import java.util.List;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 
-@Data @NoArgsConstructor @Builder
+@Data 
+@NoArgsConstructor 
 @AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TourneeDto {
     private String id;
     private List<ConteneurDTO> conteneurs;

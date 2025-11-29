@@ -23,14 +23,14 @@ public class TourneeMapper {
 
         return TourneeDto.builder()
                 .id(entity.getId())
-                .conteneurs(conteneurMapper.toDTOList(entity.getConteneur()))
-                .agentChauffeur(agentMapper.toDTO(entity.getAgentChauffeur()))
-                .agentRamasseurs(agentMapper.toDTOList(entity.getAgentRamasseurs()))
+                .conteneurs(entity.getConteneurs() != null ? conteneurMapper.toDTOList(entity.getConteneurs()) : null)
+                .agentChauffeur(entity.getAgentChauffeur() != null ? agentMapper.toDTO(entity.getAgentChauffeur()) : null)
+                .agentRamasseurs(entity.getAgentRamasseurs() != null ? agentMapper.toDTOList(entity.getAgentRamasseurs()) : null)
                 .dateDebut(entity.getDateDebut())
                 .dateFin(entity.getDateFin())
                 .itineraire(entity.getItineraire())
                 .etat(entity.getEtat())
-                .vehicule(vehiculeMapper.toDTO(entity.getVehicule()))
+                .vehicule(entity.getVehicule() != null ? vehiculeMapper.toDTO(entity.getVehicule()) : null)
                 .build();
     }
 
@@ -39,14 +39,14 @@ public class TourneeMapper {
 
         return Tournee.builder()
                 .id(dto.getId())
-                .conteneur(conteneurMapper.toEntityList(dto.getConteneurs()))
-                .agentChauffeur(agentMapper.toEntity(dto.getAgentChauffeur()))
-                .agentRamasseurs(agentMapper.toEntityList(dto.getAgentRamasseurs()))
+                .conteneurs(dto.getConteneurs() != null ? conteneurMapper.toEntityList(dto.getConteneurs()) : null)
+                .agentChauffeur(dto.getAgentChauffeur() != null ? agentMapper.toEntity(dto.getAgentChauffeur()) : null)
+                .agentRamasseurs(dto.getAgentRamasseurs() != null ? agentMapper.toEntityList(dto.getAgentRamasseurs()) : null)
                 .dateDebut(dto.getDateDebut())
                 .dateFin(dto.getDateFin())
                 .itineraire(dto.getItineraire())
                 .etat(dto.getEtat())
-                .vehicule(vehiculeMapper.toEntity(dto.getVehicule()))
+                .vehicule(dto.getVehicule() != null ? vehiculeMapper.toEntity(dto.getVehicule()) : null)
                 .build();
     }
 

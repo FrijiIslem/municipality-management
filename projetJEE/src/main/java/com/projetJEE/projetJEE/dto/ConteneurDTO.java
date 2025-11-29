@@ -2,9 +2,11 @@ package com.projetJEE.projetJEE.dto;
 
 import com.projetJEE.projetJEE.entities.enums.CouleurStatut;
 import com.projetJEE.projetJEE.entities.enums.EtatRemplissage;
+
+import lombok.Builder;
 import lombok.Data;
 
-@Data
+@Data @Builder
 public class ConteneurDTO {
     private String id;
     private String localisation;

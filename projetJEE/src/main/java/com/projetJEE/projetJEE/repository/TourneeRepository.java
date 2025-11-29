@@ -12,4 +12,5 @@ public interface TourneeRepository extends MongoRepository<Tournee, String> {
     List<Tournee> findByEtat(EtatTournee etatTournee);
     List<Tournee> findByAgentChauffeurId(String agentId);
     List<Tournee> findByAgentRamasseursId(String agentId);
-}
+    }
+

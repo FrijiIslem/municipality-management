@@ -1,10 +1,14 @@
 package com.projetJEE.projetJEE.controllers;
 
 import com.projetJEE.projetJEE.dto.TourneeDto;
+import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 import com.projetJEE.projetJEE.services.TourneeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -15,90 +19,99 @@ public class TourneeController {
     @Autowired
     private TourneeService tourneeService;
 
-    // Créer une tournée
-    @PostMapping
-    public ResponseEntity<TourneeDto> createTournee(@RequestBody TourneeDto tourneeDto) {
-        TourneeDto created = tourneeService.createTournee(tourneeDto);
-        return ResponseEntity.ok(created);
-    }
-
-    // Lister toutes les tournées
     @GetMapping
     public ResponseEntity<List<TourneeDto>> getAllTournees() {
-        return ResponseEntity.ok(tourneeService.getAllTournees());
+        List<TourneeDto> tournees = tourneeService.getAllTournees();
+        return ResponseEntity.ok(tournees);
     }
 
-    // Récupérer une tournée par ID
     @GetMapping("/{id}")
     public ResponseEntity<TourneeDto> getTourneeById(@PathVariable String id) {
         TourneeDto tournee = tourneeService.getTourneeById(id);
-        if (tournee != null) {
-            return ResponseEntity.ok(tournee);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(tournee);
     }
 
-    // Supprimer une tournée
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> supprimerTournee(@PathVariable String id) {
-        tourneeService.supprimerTournee(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping
+    public ResponseEntity<TourneeDto> createTournee(@RequestBody TourneeDto tourneeDto) {
+        TourneeDto createdTournee = tourneeService.createTournee(tourneeDto);
+        return ResponseEntity.ok(createdTournee);
     }
 
-    // Tournées par agent
-    @GetMapping("/agent/{agentId}")
-    public ResponseEntity<List<TourneeDto>> getTourneesByAgent(@PathVariable String agentId) {
-        return ResponseEntity.ok(tourneeService.getTourneesByAgent(agentId));
-    }
-
-    // Tournées par état
-    @GetMapping("/etat/{etat}")
-    public ResponseEntity<List<TourneeDto>> getTourneesByEtat(@PathVariable String etat) {
-        return ResponseEntity.ok(tourneeService.getTourneesByEtat(etat));
-    }
-
-    // Planifier une tournée
     @PostMapping("/planifier")
     public ResponseEntity<TourneeDto> planifierTournee(@RequestBody TourneeDto tourneeDto) {
-        return ResponseEntity.ok(tourneeService.planifierTournee(tourneeDto));
+        TourneeDto plannedTournee = tourneeService.planifierTournee(tourneeDto);
+        return ResponseEntity.ok(plannedTournee);
     }
 
-    // Affecter un agent à une tournée
-    @PutMapping("/{id}/affecter/{agentId}")
-    public ResponseEntity<Void> affecterTournee(@PathVariable String id, @PathVariable String agentId) {
-        tourneeService.affecterTournee(id, agentId);
-        return ResponseEntity.ok().build();
+    @PutMapping("/{id}")
+    public ResponseEntity<TourneeDto> updateTournee(@PathVariable String id, @RequestBody TourneeDto tourneeDto) {
+        TourneeDto updatedTournee = tourneeService.updateTournee(id, tourneeDto);
+        return ResponseEntity.ok(updatedTournee);
     }
 
-    // Modifier une tournée
-    @PutMapping("/")
-    public ResponseEntity<TourneeDto> modifierTournee(@RequestBody TourneeDto tourneeDto) {
-        return ResponseEntity.ok(tourneeService.modifierTournee(tourneeDto));
-    }
-
-    // Valider une tournée
     @PutMapping("/{id}/valider")
-    public ResponseEntity<Void> validerTournee(@PathVariable String id) {
-        tourneeService.validerTournee(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<TourneeDto> validerTournee(@PathVariable String id) {
+        TourneeDto tournee = tourneeService.validerTournee(id);
+        return ResponseEntity.ok(tournee);
     }
 
-    // Libérer une tournée
     @PutMapping("/{id}/liberer")
-    public ResponseEntity<Void> libererTournee(@PathVariable String id) {
-        tourneeService.libererTournee(id);
+    public ResponseEntity<TourneeDto> libererTournee(@PathVariable String id) {
+        TourneeDto tournee = tourneeService.libererTournee(id);
+        return ResponseEntity.ok(tournee);
+    }
+
+    @PutMapping("/{id}/affecter-agent/{agentId}")
+    public ResponseEntity<TourneeDto> affecterAgent(@PathVariable String id, @PathVariable String agentId) {
+        try {
+            TourneeDto updatedTournee = tourneeService.affecterAgent(id, agentId);
+            if (updatedTournee != null) {
+                return ResponseEntity.ok(updatedTournee);
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @PutMapping("/{id}/affecter-vehicule/{vehiculeId}")
+    public ResponseEntity<TourneeDto> affecterVehicule(@PathVariable String id, @PathVariable String vehiculeId) {
+        TourneeDto tournee = tourneeService.affectervehicule(id, vehiculeId);
+        if (tournee != null) {
+            return ResponseEntity.ok(tournee);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTournee(@PathVariable String id) {
+        tourneeService.deleteTournee(id);
         return ResponseEntity.ok().build();
     }
 
-    // Obtenir la durée d'une tournée
     @GetMapping("/{id}/duree")
     public ResponseEntity<Long> getDureeTournee(@PathVariable String id) {
-        return ResponseEntity.ok(tourneeService.getDureeTournee(id));
+        Duration duree = tourneeService.getDureeTournee(id);
+        return ResponseEntity.ok(duree.toMinutes());
     }
 
-    // Obtenir la durée moyenne des tournées
+    @GetMapping("/etat/{etat}")
+    public ResponseEntity<List<TourneeDto>> getTourneesByEtat(@PathVariable EtatTournee etat) {
+        List<TourneeDto> tournees = tourneeService.getTourneesByEtat(etat);
+        return ResponseEntity.ok(tournees);
+    }
+
     @GetMapping("/duree/moyenne")
-    public ResponseEntity<Double> getMoyenneDureeTournees() {
-        return ResponseEntity.ok(tourneeService.moyenneDureeTournees());
+    public ResponseEntity<Double> getDureeMoyenneTournees() {
+        Double dureeMoyenne = tourneeService.getDureeMoyenneTournees();
+        return ResponseEntity.ok(dureeMoyenne);
+    }
+
+    @GetMapping("/agent/{agentId}")
+    public ResponseEntity<List<TourneeDto>> getTourneesByAgent(@PathVariable String agentId) {
+        List<TourneeDto> tournees = tourneeService.getTourneesByAgent(agentId);
+        return ResponseEntity.ok(tournees);
     }
 }

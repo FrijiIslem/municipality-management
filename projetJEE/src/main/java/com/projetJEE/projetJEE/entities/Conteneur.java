@@ -28,4 +28,9 @@ public class Conteneur {
 
     @DBRef
     private Dechets typeDechets;
+
+	public String getTypeDechetsId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
