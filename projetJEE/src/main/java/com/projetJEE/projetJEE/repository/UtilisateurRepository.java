@@ -14,4 +14,6 @@ public interface UtilisateurRepository extends MongoRepository<Utilisateur, Stri
     Optional<Utilisateur> findByEmail(String email);
     boolean existsByEmail(String email);
     List<Utilisateur> findByRole(RoleUtilisateur role);
+    long countByRole(Utilisateur.RoleUtilisateur role);
+
 }

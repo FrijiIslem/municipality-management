@@ -3,6 +3,8 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.*;
 
+import com.projetJEE.projetJEE.dto.AgentDTO;
+import com.projetJEE.projetJEE.dto.CitoyenDTO;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Citoyen;
 import com.projetJEE.projetJEE.entities.Incident;
@@ -21,5 +23,56 @@ public class UtilisateurController {
     public boolean authentifier(@RequestParam String email, @RequestParam String password) {
         return utilisateurService.authentifier(email, password);
     }
+    //------------------------Ajouter----------------
+    @PostMapping("/citoyens")
+    public Citoyen ajouterCitoyen(@RequestBody Citoyen citoyen) {
+        return utilisateurService.ajouterCitoyen(citoyen);
+    }
+    @PostMapping("/agents")
+    public Agent ajouterAgent(@RequestBody Agent agent) {
+        return utilisateurService.ajouterUnAgent(agent);
+    }
+    //---------------get all-----------------------
+    @GetMapping("/getcitoyens")
+    public List<CitoyenDTO> getTousLesCitoyens() {
+        return utilisateurService.getTousLesCitoyens();
+    }
+    @GetMapping("/getagents")
+    public List<AgentDTO> getTousLesAgents() {
+        return utilisateurService.getTousLesAgents();
+    }
+    //----------------get nb ----------------------
+    @GetMapping("/citoyens/count")
+    public long getNbCitoyen() {
+        return utilisateurService.getNbCitoyen();
+    }
+    @GetMapping("/agents/count")
+    public long getNbAgent() {
+        return utilisateurService.getNbAgent();
+    }
+    //-----------------modifier----------------
+    @PutMapping("/citoyensMod")
+    public Citoyen modifierCitoyen(@RequestParam String ancienPassword, @RequestBody Citoyen citoyen) {
+    	if(citoyen.getId() == null || citoyen.getId().isEmpty()) {
+            throw new RuntimeException("❌ ID du citoyen requis !");
+        }
+    	return utilisateurService.modifierCitoyen(citoyen, ancienPassword);
+    }
+    @PutMapping("/agentsMod")
+    public Agent modifierUnAgent(@RequestBody Agent agent) {
+        return utilisateurService.modifierUnAgent(agent);
+    }
+    // --------------supp--------------------------
+    @DeleteMapping("/citoyenssupp/{id}")
+    public boolean supprimerCitoyen(@PathVariable String id) {
+        
+        return utilisateurService.supprimerCitoyen(id);
+    }
+    @DeleteMapping("/agentssupp/{id}")
+    public boolean supprimerUnAgent(@PathVariable String id) {
+        // Ici on peut ajouter une vérification de rôle si besoin
+        return utilisateurService.supprimerUnAgent(id);
+    }
+
 
 }
