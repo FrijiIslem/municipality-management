@@ -16,19 +16,5 @@ public class DatabaseMigration {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Bean
-    public CommandLineRunner initDatabase() {
-        return args -> {
-            // Use mongoTemplate to get the collection
-            MongoCollection<Document> tournees = mongoTemplate.getCollection("tournees");
-
-            // Update all tournees that don't have the agentChauffeur field
-            tournees.updateMany(
-                Filters.exists("agentChauffeur", false),
-                Updates.set("agentChauffeur", null)
-            );
-            
-            System.out.println("Database migration completed: Added agentChauffeur field to tournees collection");
-        };
-    }
+    
 }

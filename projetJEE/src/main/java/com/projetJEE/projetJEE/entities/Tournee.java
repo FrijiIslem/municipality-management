@@ -12,7 +12,6 @@ import java.util.List;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 
-import jakarta.persistence.PrePersist;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -29,13 +28,10 @@ import org.springframework.stereotype.Component;
 public class Tournee {
     @Id 
     private String id;
-    
     private List<Conteneur> conteneurs;
-
     @DBRef
     @Builder.Default
     private Agent agentChauffeur = null;
-
     @DBRef
     @Builder.Default
     private List<Agent> agentRamasseurs = new ArrayList<>();
@@ -46,13 +42,5 @@ public class Tournee {
     private Vehicule vehicule;
     private LocalDateTime dateFin;
 
-    @PrePersist
-    public void prePersist() {
-        if (this.agentChauffeur == null) {
-            this.agentChauffeur = null;  // Explicitly set to null
-        }
-        if (this.agentRamasseurs == null) {
-            this.agentRamasseurs = new ArrayList<>();
-        }
-    }
+
 }

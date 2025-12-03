@@ -1,5 +1,6 @@
 package com.projetJEE.projetJEE.dto;
 
+import com.projetJEE.projetJEE.entities.enums.TypeTache;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,5 +26,5 @@ public class AgentDTO {
 
 	    private Boolean disponibilite;
 	    private String plageHoraire;
-	    private String tache; 
+	    private TypeTache tache; 
 }

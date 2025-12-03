@@ -15,12 +15,5 @@ public interface AgentRepository extends MongoRepository<Agent, String> {
     // Trouver agent par nom (LIKE)
     List<Agent> findByNomContainingIgnoreCase(String nom);
 
-    // Trouver agents disponibles (pas en tournée)
-    List<Agent> findByDisponibiliteTrue();
-
-    // Trouver par téléphone
-    Optional<Agent> findByNumeroTel(Long numeroTel);
-    Optional<Agent> findFirstByTacheAndDisponibiliteTrue(String tache);
     List<Agent> findByTacheAndDisponibiliteTrue(String tache);
-    List<Agent> findByTache(String tache);
 }
