@@ -1,5 +1,6 @@
 package com.projetJEE.projetJEE.dto;
 
+import com.projetJEE.projetJEE.entities.Agent.TypeTache;
 import com.projetJEE.projetJEE.entities.Utilisateur;
 import com.projetJEE.projetJEE.entities.Utilisateur.RoleUtilisateur;
 
@@ -21,5 +22,5 @@ public class AgentDTO {
 
 	    private Boolean disponibilite;
 	    private String plageHoraire;
-	    private String tache; 
+	    private TypeTache tache; 
 }

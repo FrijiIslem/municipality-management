@@ -1,6 +1,7 @@
 package com.projetJEE.projetJEE.services.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import com.projetJEE.projetJEE.dto.CitoyenDTO;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Citoyen;
 import com.projetJEE.projetJEE.entities.Incident;
+import com.projetJEE.projetJEE.entities.Utilisateur;
 import com.projetJEE.projetJEE.entities.Utilisateur.RoleUtilisateur;
 import com.projetJEE.projetJEE.mapper.AgentMapper;
 import com.projetJEE.projetJEE.mapper.CitoyenMapper;
@@ -143,15 +145,57 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
 	}
 
+	
+	
+	//**************************************WATING FOR TOURNNEEµµµµµµµµµµµµµµµµµ
+	
 	@Override
 	public boolean marqueDebutTournee(String agentId) {
-		// TODO Auto-generated method stub
+		/*
+		 * // Vérifier si l'agent existe et est un Agent Optional<Agent> agentOpt =
+		 * utilisateurRepository.findById(agentId) .filter(u -> u instanceof Agent)
+		 * .map(u -> (Agent) u);
+		 * 
+		 * if (agentOpt.isEmpty()) { return false; // agent non trouvé }
+		 * 
+		 * Agent agent = agentOpt.get();
+		 * 
+		 * // Trouver la tournée planifiée pour ce chauffeur Optional<Tournee>
+		 * tourneeOpt = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 * EtatTournee.PLANIFIEE);
+		 * 
+		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
+		 * tournee.setEtat(EtatTournee.ENCOURS);
+		 * tournee.setDateDebut(LocalDateTime.now()); tourneeRepository.save(tournee);
+		 * return true; // tournée démarrée }
+		 * 
+		 * return false; // aucune tournée planifiée trouvée }
+		 */
 		return false;
 	}
 
 	@Override
 	public boolean marqueFinTournee(String agentId) {
-		// TODO Auto-generated method stub
+		/*
+		 * // Vérifier si l'agent existe et est un Agent Optional<Agent> agentOpt =
+		 * utilisateurRepository.findById(agentId) .filter(u -> u instanceof Agent)
+		 * .map(u -> (Agent) u);
+		 * 
+		 * if (agentOpt.isEmpty()) { return false; // agent non trouvé }
+		 * 
+		 * Agent agent = agentOpt.get();
+		 * 
+		 * // Trouver la tournée en cours pour ce chauffeur Optional<Tournee> tourneeOpt
+		 * = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 * EtatTournee.ENCOURS);
+		 * 
+		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
+		 * tournee.setEtat(EtatTournee.TERMINEE);
+		 * tournee.setDateFin(LocalDateTime.now()); tourneeRepository.save(tournee);
+		 * return true; // tournée terminée }
+		 * 
+		 * return false; // aucune tournée en cours trouvée }
+		 */
 		return false;
 	}
 
@@ -195,6 +239,26 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
+	// false  
+@Override
+public List<Utilisateur> getAgentsByTacheEtDisponibilite(Agent.TypeTache tache, Boolean dispo) {
+    return null;
+    
+}
+//for islem
+@Override
 
+public List<Agent> getAgentsDisponiblesParTache(Agent.TypeTache tache) {
+    // Récupérer tous les utilisateurs avec rôle AGENT
+    List<Utilisateur> utilisateurs = utilisateurRepository.findByRole(RoleUtilisateur.AGENT);
+
+    // Filtrer uniquement les Agents correspondant à la tâche et disponibles
+    return utilisateurs.stream()
+            .filter(u -> u instanceof Agent)           // s'assurer que c'est un Agent
+            .map(u -> (Agent) u)                        // cast en Agent
+            .filter(a -> a.getTache() == tache && Boolean.TRUE.equals(a.getDisponibilite()))
+            .collect(Collectors.toList());
+}
 }

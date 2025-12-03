@@ -1,8 +1,9 @@
 package com.projetJEE.projetJEE.repository
 ;
 
-import org.springframework.data.mongodb.repository.MongoRepository;	
+import org.springframework.data.mongodb.repository.MongoRepository;
 
+import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Utilisateur;
 import com.projetJEE.projetJEE.entities.Utilisateur.RoleUtilisateur;
 
@@ -15,5 +16,11 @@ public interface UtilisateurRepository extends MongoRepository<Utilisateur, Stri
     boolean existsByEmail(String email);
     List<Utilisateur> findByRole(RoleUtilisateur role);
     long countByRole(Utilisateur.RoleUtilisateur role);
+    // for islem 
+    //List<Utilisateur> findByRoleAndTacheAndDisponibilite(RoleUtilisateur role, 
+      
+    //Agent.TypeTache tache, 
+      
+    //Boolean disponibilite);
 
 }

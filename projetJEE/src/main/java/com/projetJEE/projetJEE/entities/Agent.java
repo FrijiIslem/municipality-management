@@ -18,6 +18,12 @@ public class Agent extends Utilisateur {
 
     private Boolean disponibilite;
     private String plageHoraire;
-    private String tache;
+    private TypeTache tache;
+    public enum TypeTache {
+        AGENT_RAMASSEURS,
+        AGENT_CHAUFFEUR
+    }
+
+
 }
 

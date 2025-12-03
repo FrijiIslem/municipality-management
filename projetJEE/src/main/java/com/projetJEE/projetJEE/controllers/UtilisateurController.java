@@ -73,6 +73,14 @@ public class UtilisateurController {
         // Ici on peut ajouter une vérification de rôle si besoin
         return utilisateurService.supprimerUnAgent(id);
     }
+    
+    // for islem
+    @GetMapping("/getagenttache/{tache}")
+    public List<Agent> getAgentsDisponibles(@PathVariable("tache") String tache) {
+        Agent.TypeTache typeTache = Agent.TypeTache.valueOf(tache.toUpperCase());
+        return utilisateurService.getAgentsDisponiblesParTache(typeTache);
+    }
+
 
 
 }
