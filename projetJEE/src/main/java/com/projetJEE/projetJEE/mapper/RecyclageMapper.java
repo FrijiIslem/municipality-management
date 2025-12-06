@@ -1,39 +1,36 @@
 package com.projetJEE.projetJEE.mapper;
 
-import com.projetJEE.projetJEE.dto.RecyclageDTO;
-import com.projetJEE.projetJEE.entities.Dechets;
-import com.projetJEE.projetJEE.entities.Recyclage;
-import com.projetJEE.projetJEE.repository.DechetsRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.projetJEE.projetJEE.dto.RecyclageDTO;
+import com.projetJEE.projetJEE.entities.Recyclage;
 
 @Component
 public class RecyclageMapper {
-	@Autowired
-	private DechetsRepository dechetsRepository;
-
+	
 	public RecyclageDTO toDTO(Recyclage r) {
+
 	    RecyclageDTO dto = new RecyclageDTO();
+
 	    dto.setId(r.getId());
 	    dto.setQuantite(r.getQuantite());
 	    dto.setTaux(r.getTaux());
-	    dto.setTypeDechetId(r.getType().getId());
+	    dto.setTypeDechet(r.getTypeDechet());
+
 	    return dto;
 	}
 
-    public Recyclage toEntity(RecyclageDTO dto) {
-        Recyclage r = new Recyclage();
-        r.setId(dto.getId());
-        r.setQuantite(dto.getQuantite());
-        r.setTaux(dto.getTaux());
+	public Recyclage toEntity(RecyclageDTO dto) {
 
-        // Load the Dechets entity from the ID in the DTO
-        Dechets dechet = dechetsRepository.findById(dto.getTypeDechetId())
-                .orElseThrow(() -> new RuntimeException("Type de déchet introuvable"));
+	    Recyclage r = new Recyclage();
 
-        r.setType(dechet);
+	    r.setId(dto.getId());
+	    r.setQuantite(dto.getQuantite());
+	    r.setTaux(dto.getTaux());
 
-        return r;
-    }
+	    // Enum is passed directly
+	    r.setTypeDechet(dto.getTypeDechet());
+
+	    return r;
+	}
+
 }

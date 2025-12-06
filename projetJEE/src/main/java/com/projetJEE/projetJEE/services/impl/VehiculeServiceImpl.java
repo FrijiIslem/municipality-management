@@ -1,5 +1,6 @@
 package com.projetJEE.projetJEE.services.impl;
 
+import com.projetJEE.projetJEE.dto.VehiculeDTO;
 import com.projetJEE.projetJEE.entities.Vehicule;
 import com.projetJEE.projetJEE.repository.VehiculeRepository;
 import com.projetJEE.projetJEE.services.VehiculeService;
@@ -7,25 +8,30 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VehiculeServiceImpl implements VehiculeService {
 
     private final VehiculeRepository vehiculeRepository;
+    private final com.projetJEE.projetJEE.mapper.VehiculeMapper vehiculeMapper; 
 
     @Override
-    public Vehicule createVehicule(Vehicule vehicule) {
-        return vehiculeRepository.save(vehicule);
+    public VehiculeDTO createVehicule(VehiculeDTO vehiculeDTO) {
+        Vehicule vehicule = vehiculeMapper.toEntity(vehiculeDTO);
+        Vehicule saved = vehiculeRepository.save(vehicule);
+        return vehiculeMapper.toDTO(saved);
     }
 
     @Override
-    public Vehicule updateVehicule(String id, Vehicule updated) {
-        Vehicule v = vehiculeRepository.findById(id).orElseThrow();
-        v.setCapaciteMax(updated.getCapaciteMax());
-        v.setDisponibilite(updated.isDisponibilite());
-        v.setMatricule(updated.getMatricule());
-        return vehiculeRepository.save(v);
+    public VehiculeDTO updateVehicule(String id, VehiculeDTO updatedDTO) {
+        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        vehicule.setMatricule(updatedDTO.getMatricule());
+        vehicule.setCapaciteMax(updatedDTO.getCapaciteMax());
+        vehicule.setDisponibilite(updatedDTO.isDisponibilite());
+        Vehicule updated = vehiculeRepository.save(vehicule);
+        return vehiculeMapper.toDTO(updated);
     }
 
     @Override
@@ -34,19 +40,24 @@ public class VehiculeServiceImpl implements VehiculeService {
     }
 
     @Override
-    public Vehicule getVehiculeById(String id) {
-        return vehiculeRepository.findById(id).orElseThrow();
+    public VehiculeDTO getVehiculeById(String id) {
+        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        return vehiculeMapper.toDTO(vehicule);
     }
 
     @Override
-    public List<Vehicule> getAllVehicules() {
-        return vehiculeRepository.findAll();
+    public List<VehiculeDTO> getAllVehicules() {
+        return vehiculeRepository.findAll()
+                .stream()
+                .map(vehiculeMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Vehicule modifierDisponibilite(String id, boolean dispo) {
-        Vehicule v = vehiculeRepository.findById(id).orElseThrow();
-        v.setDisponibilite(dispo);
-        return vehiculeRepository.save(v);
+    public VehiculeDTO modifierDisponibilite(String id, boolean dispo) {
+        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        vehicule.setDisponibilite(dispo);
+        Vehicule updated = vehiculeRepository.save(vehicule);
+        return vehiculeMapper.toDTO(updated);
     }
 }

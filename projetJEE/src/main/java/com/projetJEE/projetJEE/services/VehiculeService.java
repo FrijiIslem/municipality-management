@@ -1,19 +1,20 @@
 package com.projetJEE.projetJEE.services;
 
+import com.projetJEE.projetJEE.dto.VehiculeDTO;
 import com.projetJEE.projetJEE.entities.Vehicule;
 import java.util.List;
 
 public interface VehiculeService {
 
-    Vehicule createVehicule(Vehicule vehicule);
+    VehiculeDTO createVehicule(VehiculeDTO vehiculeDTO);
 
-    Vehicule updateVehicule(String id, Vehicule vehicule);
+    VehiculeDTO updateVehicule(String id, VehiculeDTO vehiculeDTO);
 
     void deleteVehicule(String id);
 
-    Vehicule getVehiculeById(String id);
+    VehiculeDTO getVehiculeById(String id);
 
-    List<Vehicule> getAllVehicules();
+    List<VehiculeDTO> getAllVehicules();
 
-    Vehicule modifierDisponibilite(String id, boolean dispo);
+    VehiculeDTO modifierDisponibilite(String id, boolean dispo);
 }

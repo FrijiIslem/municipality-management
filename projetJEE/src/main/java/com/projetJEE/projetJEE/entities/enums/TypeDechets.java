@@ -5,5 +5,6 @@ public enum TypeDechets {
     plastique,
     organique,
     mixte,
-    metals
+    metals;
+
 }

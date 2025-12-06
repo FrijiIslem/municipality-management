@@ -5,17 +5,17 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
+import java.util.Date;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "dechets")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Dechets {
-	 @Id
 	    private String id;
-
 	    private TypeDechets type;
+	    private boolean ramasse;
 }

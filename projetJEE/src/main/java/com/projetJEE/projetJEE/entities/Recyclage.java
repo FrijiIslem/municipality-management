@@ -5,6 +5,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.projetJEE.projetJEE.entities.enums.TypeDechets;
+
 @Document("recyclage")
 @Data
 @Builder
@@ -19,6 +21,5 @@ public class Recyclage {
 
     private float taux;
 
-    @DBRef
-    private Dechets type;
+    private TypeDechets typeDechet;
 }
