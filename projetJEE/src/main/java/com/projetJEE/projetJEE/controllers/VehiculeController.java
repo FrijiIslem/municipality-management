@@ -1,7 +1,9 @@
 package com.projetJEE.projetJEE.controllers;
 
-import com.projetJEE.projetJEE.entities.Vehicule;
+import com.projetJEE.projetJEE.dto.VehiculeDTO;
 import com.projetJEE.projetJEE.services.VehiculeService;
+
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,34 +16,45 @@ public class VehiculeController {
 
     private final VehiculeService vehiculeService;
 
+    // Créer un véhicule
+    @Operation(summary = "Créer un véhicule")
     @PostMapping
-    public Vehicule create(@RequestBody Vehicule vehicule) {
-        return vehiculeService.createVehicule(vehicule);
+    public VehiculeDTO create(@RequestBody VehiculeDTO vehiculeDTO) {
+        return vehiculeService.createVehicule(vehiculeDTO);
     }
 
+    // Mettre à jour un véhicule
+    @Operation(summary = "Mettre à jour un véhicule")
     @PutMapping("/{id}")
-    public Vehicule update(@PathVariable String id, @RequestBody Vehicule vehicule) {
-        return vehiculeService.updateVehicule(id, vehicule);
+    public VehiculeDTO update(@PathVariable String id, @RequestBody VehiculeDTO vehiculeDTO) {
+        return vehiculeService.updateVehicule(id, vehiculeDTO);
     }
 
+    // Récupérer un véhicule par ID
+    @Operation(summary = "Récupérer un véhicule par id")
     @GetMapping("/{id}")
-    public Vehicule getOne(@PathVariable String id) {
+    public VehiculeDTO getOne(@PathVariable String id) {
         return vehiculeService.getVehiculeById(id);
     }
 
+    // Récupérer tous les véhicules
+    @Operation(summary = "Récupérer tous les véhicules")
     @GetMapping
-    public List<Vehicule> getAll() {
+    public List<VehiculeDTO> getAll() {
         return vehiculeService.getAllVehicules();
     }
 
+    // Supprimer un véhicule
+    @Operation(summary = "Supprimer un véhicule")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) {
         vehiculeService.deleteVehicule(id);
     }
 
+    // Mettre à jour la disponibilité
+    @Operation(summary = "Mettre à jour la disponibilité")
     @PutMapping("/{id}/disponibilite")
-    public Vehicule updateDispo(@PathVariable String id, @RequestParam boolean dispo) {
+    public VehiculeDTO updateDispo(@PathVariable String id, @RequestParam boolean dispo) {
         return vehiculeService.modifierDisponibilite(id, dispo);
     }
 }
-

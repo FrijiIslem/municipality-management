@@ -1,65 +1,92 @@
 package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.ConteneurDTO;
+import com.projetJEE.projetJEE.dto.DechetsDTO;
 import com.projetJEE.projetJEE.entities.Conteneur;
 import com.projetJEE.projetJEE.entities.Dechets;
-import com.projetJEE.projetJEE.repository.DechetsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class ConteneurMapper {
 
-    private final DechetsRepository dechetsRepository;
+    // ====================================
+    //           ENTITY → DTO
+    // ====================================
+    public ConteneurDTO toDTO(Conteneur cont) {
+        if (cont == null) return null;
 
-    @Autowired
-    public ConteneurMapper(DechetsRepository dechetsRepository) {
-        this.dechetsRepository = dechetsRepository;
+        ConteneurDTO dto = new ConteneurDTO();
+        dto.setId(cont.getId());
+        dto.setLocalisation(cont.getLocalisation());
+        dto.setCouleurStatut(cont.getCouleurStatut());
+        dto.setEtatRemplissage(cont.getEtatRemplissage());
+        dto.setQuantite_max(Conteneur.quantite_max);
+
+        dto.setDechets(
+            cont.getDechets()
+                .stream()
+                .map(this::toDechetsDTO)
+                .collect(Collectors.toList())
+        );
+
+        return dto;
     }
 
-    public ConteneurDTO toDTO(Conteneur c) {
-        if (c == null) return null; // <-- évite le crash
+    private DechetsDTO toDechetsDTO(Dechets d) {
+        if (d == null) return null;
 
-        return ConteneurDTO.builder()
-                .id(c.getId())
-                .localisation(c.getLocalisation())
-                .couleurStatut(c.getCouleurStatut())
-                .etatRemplissage(c.getEtatRemplissage())
-                .typeDechetsId(c.getTypeDechetsId())
-                .build();
+        DechetsDTO dto = new DechetsDTO();
+        dto.setId(d.getId());
+        dto.setType(d.getType());
+        return dto;
     }
 
-
+    // ====================================
+    //           DTO → ENTITY
+    // ====================================
     public Conteneur toEntity(ConteneurDTO dto) {
         if (dto == null) return null;
 
-        Dechets dechets = null;
-        if (dto.getTypeDechetsId() != null) {
-            dechets = dechetsRepository.findById(dto.getTypeDechetsId()).orElse(null);
+        Conteneur cont = new Conteneur();
+        cont.setId(dto.getId());
+        cont.setLocalisation(dto.getLocalisation());
+        cont.setCouleurStatut(dto.getCouleurStatut());
+        cont.setEtatRemplissage(dto.getEtatRemplissage());
+
+        if (dto.getDechets() != null) {
+            cont.setDechets(
+                dto.getDechets()
+                    .stream()
+                    .map(this::toDechetsEntity)
+                    .collect(Collectors.toList())
+            );
         }
 
-        return Conteneur.builder()
-                .id(dto.getId())
-                .localisation(dto.getLocalisation())
-                .couleurStatut(dto.getCouleurStatut())
-                .etatRemplissage(dto.getEtatRemplissage())
-                .typeDechets(dechets)
-                .build();
+        return cont;
     }
 
+    public Dechets toDechetsEntity(DechetsDTO dto) {
+        if (dto == null) return null;
+
+        Dechets d = new Dechets();
+        d.setId(dto.getId());
+        d.setType(dto.getType());
+
+        return d;
+    }
+
+    // ====================================
+    //           LIST MAPPERS
+    // ====================================
     public List<ConteneurDTO> toDTOList(List<Conteneur> list) {
-        if (list == null) return Collections.emptyList();
-        return list.stream()
-                .filter(Objects::nonNull) // <-- AJOUT ESSENTIEL !!!
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        if (list == null) return null;
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
     }
-
 
     public List<Conteneur> toEntityList(List<ConteneurDTO> list) {
         if (list == null) return null;

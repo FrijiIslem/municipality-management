@@ -1,19 +1,29 @@
 package com.projetJEE.projetJEE.services;
 
-import com.projetJEE.projetJEE.entities.Conteneur;
+import com.projetJEE.projetJEE.dto.CitoyenDTO;
+import com.projetJEE.projetJEE.dto.ConteneurDTO;
+import com.projetJEE.projetJEE.dto.DechetsDTO;
+import com.projetJEE.projetJEE.entities.enums.CouleurStatut;
+
 import java.util.List;
 
 public interface ConteneurService {
 
-    Conteneur createConteneur(Conteneur conteneur);
-
-    Conteneur updateConteneur(String id, Conteneur conteneur);
+    ConteneurDTO createConteneur(ConteneurDTO conteneurDTO);
 
     void deleteConteneur(String id);
 
-    Conteneur getConteneurById(String id);
+    ConteneurDTO getConteneurById(String id);
 
-    List<Conteneur> getAllConteneurs();
+    List<ConteneurDTO> getAllConteneurs();
 
-    Conteneur updateEtatRemplissage(String id, Conteneur conteneur);
+    CouleurStatut saturationColor(ConteneurDTO conteneurDTO);
+
+    ConteneurDTO viderConteneur(String id, ConteneurDTO dto);
+
+    ConteneurDTO ajouterDechet(String idConteneur, DechetsDTO dto);
+
+    ConteneurDTO updateEtat(String idConteneur);
+
+    ConteneurDTO ajouterCitoyen(String idConteneur, CitoyenDTO dto);
 }

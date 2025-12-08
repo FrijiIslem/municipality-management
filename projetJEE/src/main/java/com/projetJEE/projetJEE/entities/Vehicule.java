@@ -12,9 +12,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Vehicule {
-	@Id
+    @Id
     private String id;
 
     private Long matricule;
@@ -22,5 +21,4 @@ public class Vehicule {
     private float capaciteMax;
 
     private boolean disponibilite;
-
 }

@@ -1,8 +1,8 @@
 package com.projetJEE.projetJEE.entities;
 
 import lombok.*;
+import com.projetJEE.projetJEE.entities.enums.TypeDechets;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("recyclage")
@@ -19,6 +19,5 @@ public class Recyclage {
 
     private float taux;
 
-    @DBRef
-    private Dechets type;
+    private TypeDechets typeDechet;
 }

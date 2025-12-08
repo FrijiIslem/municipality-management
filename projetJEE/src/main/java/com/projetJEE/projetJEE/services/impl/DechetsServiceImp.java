@@ -2,6 +2,7 @@ package com.projetJEE.projetJEE.services.impl;
 
 import com.projetJEE.projetJEE.dto.DechetsDTO;
 import com.projetJEE.projetJEE.entities.Dechets;
+import com.projetJEE.projetJEE.exceptions.ResourceNotFoundException;
 import com.projetJEE.projetJEE.repository.DechetsRepository;
 import com.projetJEE.projetJEE.services.DechetsService;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +34,14 @@ public class DechetsServiceImp implements DechetsService {
     @Override
     public DechetsDTO findById(String id) {
         Dechets d = dechetsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Déchet introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Déchet introuvable avec l'ID: " + id));
         return new DechetsDTO(d.getId(), d.getType());
     }
 
     @Override
     public DechetsDTO update(String id, DechetsDTO dto) {
         Dechets d = dechetsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Déchet introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Déchet introuvable avec l'ID: " + id));
 
         d.setType(dto.getType());
         dechetsRepository.save(d);

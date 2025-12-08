@@ -6,18 +6,20 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 @Document(collection = "conteneurs")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Conteneur {
-	@Id
+    @Id
     private String id;
 
     private String localisation;
@@ -26,11 +28,9 @@ public class Conteneur {
 
     private EtatRemplissage etatRemplissage;
 
-    @DBRef
-    private Dechets typeDechets;
+    public final static int quantite_max = 200;
 
-	public String getTypeDechetsId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    private List<Dechets> dechets = new ArrayList<>();
+
+    private List<Citoyen> citoyens = new ArrayList<>();
 }

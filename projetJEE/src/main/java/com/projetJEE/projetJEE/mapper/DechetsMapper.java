@@ -15,9 +15,9 @@ public class DechetsMapper {
     }
 
     public Dechets toEntity(DechetsDTO dto) {
-        return Dechets.builder()
-                .id(dto.getId())
-                .type(dto.getType())
-                .build();
+        Dechets dechets = new Dechets();
+        dechets.setId(dto.getId());
+        dechets.setType(dto.getType());
+        return dechets;
     }
 }
