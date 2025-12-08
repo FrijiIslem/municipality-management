@@ -11,12 +11,14 @@ import java.util.stream.Collectors;
 @Component
 public class TourneeMapper {
 
+    private final ConteneurMapper conteneurMapper;
+    private final VehiculeMapper vehiculeMapper;
+
     @Autowired
-    private AgentMapper agentMapper;
-    @Autowired
-    private ConteneurMapper conteneurMapper;
-    @Autowired
-    private VehiculeMapper vehiculeMapper;
+    public TourneeMapper(ConteneurMapper conteneurMapper, VehiculeMapper vehiculeMapper) {
+        this.conteneurMapper = conteneurMapper;
+        this.vehiculeMapper = vehiculeMapper;
+    }
 
     public TourneeDto toDTO(Tournee entity) {
         if (entity == null) return null;
@@ -24,8 +26,8 @@ public class TourneeMapper {
         return TourneeDto.builder()
                 .id(entity.getId())
                 .conteneurs(entity.getConteneurs() != null ? conteneurMapper.toDTOList(entity.getConteneurs()) : null)
-                .agentChauffeur(entity.getAgentChauffeur() != null ? agentMapper.toDTO(entity.getAgentChauffeur()) : null)
-                .agentRamasseurs(entity.getAgentRamasseurs() != null ? agentMapper.toDTOList(entity.getAgentRamasseurs()) : null)
+                .agentChauffeur(entity.getAgentChauffeur() != null ? AgentMapper.toDTO(entity.getAgentChauffeur()) : null)
+                .agentRamasseurs(entity.getAgentRamasseurs() != null ? AgentMapper.toDTOList(entity.getAgentRamasseurs()) : null)
                 .dateDebut(entity.getDateDebut())
                 .dateFin(entity.getDateFin())
                 .itineraire(entity.getItineraire())
@@ -40,8 +42,8 @@ public class TourneeMapper {
         return Tournee.builder()
                 .id(dto.getId())
                 .conteneurs(dto.getConteneurs() != null ? conteneurMapper.toEntityList(dto.getConteneurs()) : null)
-                .agentChauffeur(dto.getAgentChauffeur() != null ? agentMapper.toEntity(dto.getAgentChauffeur()) : null)
-                .agentRamasseurs(dto.getAgentRamasseurs() != null ? agentMapper.toEntityList(dto.getAgentRamasseurs()) : null)
+                .agentChauffeur(dto.getAgentChauffeur() != null ? AgentMapper.toEntity(dto.getAgentChauffeur()) : null)
+                .agentRamasseurs(dto.getAgentRamasseurs() != null ? AgentMapper.toEntityList(dto.getAgentRamasseurs()) : null)
                 .dateDebut(dto.getDateDebut())
                 .dateFin(dto.getDateFin())
                 .itineraire(dto.getItineraire())

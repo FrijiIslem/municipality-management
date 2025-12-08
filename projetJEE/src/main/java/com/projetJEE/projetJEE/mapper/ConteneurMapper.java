@@ -15,8 +15,12 @@ import java.util.stream.Collectors;
 @Component
 public class ConteneurMapper {
 
+    private final DechetsRepository dechetsRepository;
+
     @Autowired
-    private DechetsRepository dechetsRepository;
+    public ConteneurMapper(DechetsRepository dechetsRepository) {
+        this.dechetsRepository = dechetsRepository;
+    }
 
     public ConteneurDTO toDTO(Conteneur c) {
         if (c == null) return null; // <-- évite le crash

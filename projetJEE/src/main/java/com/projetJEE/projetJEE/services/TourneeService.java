@@ -1,6 +1,7 @@
 package com.projetJEE.projetJEE.services;
 
 import com.projetJEE.projetJEE.dto.TourneeDto;
+import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 
 import java.time.Duration;
@@ -16,17 +17,11 @@ public interface TourneeService {
     TourneeDto libererTournee(String id);
     TourneeDto affecterAgent(String id, String agentId);
     TourneeDto affectervehicule(String id, String vehiculeId);
-    void deleteTournee(String id);
     Duration getDureeTournee(String id);
     List<TourneeDto> getTourneesByEtat(EtatTournee etat);
-    Double getDureeMoyenneTournees();
+    void deleteTournee(String id);
     List<TourneeDto> getTourneesByAgent(String agentId);
-    
-    // Legacy methods for backward compatibility
-    void affecterTournee(String tourneeId, String agentId, String vehiculeId);
-    void supprimerTournee(String tourneeId);
-    TourneeDto modifierTournee(TourneeDto dto);
-    double moyenneDureeTournees();
+    Double getDureeMoyenneTournees();
     
 
     

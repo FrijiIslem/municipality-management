@@ -1,14 +1,14 @@
 package com.projetJEE.projetJEE.mapper;
 
-import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.dto.AgentDTO;
+import com.projetJEE.projetJEE.entities.Agent;
 
-import org.springframework.stereotype.Component;
+import java.util.List;
+import java.util.stream.Collectors;
 
-@Component
 public class AgentMapper {
 
-    public AgentDTO toDTO(Agent agent) {
+    public static AgentDTO toDTO(Agent agent) {
         if (agent == null) return null;
 
         return AgentDTO.builder()
@@ -17,14 +17,14 @@ public class AgentMapper {
                 .prenom(agent.getPrenom())
                 .email(agent.getEmail())
                 .numeroTel(agent.getNumeroTel())
-                .role(agent.getRole() != null ? com.projetJEE.projetJEE.dto.AgentDTO.RoleUtilisateur.valueOf(agent.getRole().name()) : null)
+                .role(agent.getRole())
                 .disponibilite(agent.getDisponibilite())
                 .plageHoraire(agent.getPlageHoraire())
                 .tache(agent.getTache())
                 .build();
     }
 
-    public Agent toEntity(AgentDTO dto) {
+    public static Agent toEntity(AgentDTO dto) {
         if (dto == null) return null;
 
         Agent agent = new Agent();
@@ -33,20 +33,23 @@ public class AgentMapper {
         agent.setPrenom(dto.getPrenom());
         agent.setEmail(dto.getEmail());
         agent.setNumeroTel(dto.getNumeroTel());
-        agent.setRole(dto.getRole() != null ? Agent.RoleUtilisateur.valueOf(dto.getRole().name()) : null);
+        agent.setRole(dto.getRole());
         agent.setDisponibilite(dto.getDisponibilite());
         agent.setPlageHoraire(dto.getPlageHoraire());
         agent.setTache(dto.getTache());
         return agent;
     }
 
-    public java.util.List<AgentDTO> toDTOList(java.util.List<Agent> list) {
-        if (list == null) return null;
-        return list.stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
+
+
+// zedtha ana islem !!!!!!!!!
+    public static List<AgentDTO> toDTOList(List<Agent> agents) {
+        if (agents == null) return null;
+        return agents.stream().map(AgentMapper::toDTO).collect(Collectors.toList());
     }
 
-    public java.util.List<Agent> toEntityList(java.util.List<AgentDTO> list) {
-        if (list == null) return null;
-        return list.stream().map(this::toEntity).collect(java.util.stream.Collectors.toList());
+    public static List<Agent> toEntityList(List<AgentDTO> dtos) {
+        if (dtos == null) return null;
+        return dtos.stream().map(AgentMapper::toEntity).collect(Collectors.toList());
     }
 }

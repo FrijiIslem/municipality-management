@@ -1,14 +1,21 @@
 package com.projetJEE.projetJEE.services.impl;
 
-import java.util.List;	
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.projetJEE.projetJEE.dto.AgentDTO;
+import com.projetJEE.projetJEE.dto.CitoyenDTO;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Citoyen;
 import com.projetJEE.projetJEE.entities.Incident;
-import com.projetJEE.projetJEE.repository.AgentRepository;
-import com.projetJEE.projetJEE.repository.CitoyenRepository;
+import com.projetJEE.projetJEE.entities.Utilisateur;
+import com.projetJEE.projetJEE.entities.Utilisateur.RoleUtilisateur;
+import com.projetJEE.projetJEE.mapper.AgentMapper;
+import com.projetJEE.projetJEE.mapper.CitoyenMapper;
 import com.projetJEE.projetJEE.repository.IncidentRepository;
 import com.projetJEE.projetJEE.repository.UtilisateurRepository;
 import com.projetJEE.projetJEE.services.UtilisateurServiceInterface;
@@ -19,31 +26,45 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
-    private final AgentRepository agentRepository;
-    private final CitoyenRepository citoyenRepository;
+    private final UtilisateurRepository utilisateurRepository;
     private final IncidentRepository incidentRepository;
 
 	@Override
 	public boolean authentifier(String email, String password) {
-	    return agentRepository.findByEmail(email).filter(a -> a.getPassword().equals(password)).isPresent() ||
-	           citoyenRepository.findByEmail(email).filter(c -> c.getPassword().equals(password)).isPresent();
+	    return utilisateurRepository.findByEmail(email)
+	            .filter(u -> u.getPassword().equals(password))
+	            .isPresent();
 	}
 
 	@Override
 	public Citoyen ajouterCitoyen(Citoyen citoyen) {
-		return citoyenRepository.save(citoyen);
+
+	    // check if  email 
+		boolean emailExiste = utilisateurRepository.findByEmail(citoyen.getEmail()).isPresent();
+	    if (emailExiste) {
+	        // ⚡ Renvoyer un code HTTP 409 Conflict
+	        throw new ResponseStatusException(
+	            HttpStatus.CONFLICT, "❌ Citoyen existe déjà avec cet email !");
+	    }
+	
+	    citoyen.setRole(RoleUtilisateur.CITOYEN);
+
+	    //  save in MongoDB
+	    return utilisateurRepository.save(citoyen);
 	}
 
 	@Override
-	public List<Citoyen> getTousLesCitoyens() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<CitoyenDTO> getTousLesCitoyens() {
+		 return utilisateurRepository.findByRole(Citoyen.RoleUtilisateur.CITOYEN)
+		            .stream()
+		            .map(c -> CitoyenMapper.toDTO((Citoyen) c)) // transformer entité en DTO
+		            .toList();
 	}
 
 	@Override
 	public long getNbCitoyen() {
-		// TODO Auto-generated method stub
-		return 0;
+	    return utilisateurRepository.countByRole(Citoyen.RoleUtilisateur.CITOYEN);
+
 	}
 
 	@Override
@@ -53,15 +74,38 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 	}
 
 	@Override
-	public Citoyen modifierCitoyen(Citoyen citoyen) {
-		// TODO Auto-generated method stub
-		return null;
+	public Citoyen modifierCitoyen(Citoyen citoyen, String ancienPassword) {
+	    Citoyen existing = (Citoyen) utilisateurRepository.findById(citoyen.getId())
+	            .orElseThrow(() -> new RuntimeException("❌ Citoyen non trouvé avec l'ID : " + citoyen.getId()));
+
+	    //  l'ancien
+	    if (!existing.getPassword().equals(ancienPassword)) {
+	        throw new RuntimeException("❌ Ancien mot de passe incorrect !");
+	    }
+
+	    existing.setNom(citoyen.getNom() != null ? citoyen.getNom() : existing.getNom());
+	    existing.setPrenom(citoyen.getPrenom() != null ? citoyen.getPrenom() : existing.getPrenom());
+	    existing.setEmail(citoyen.getEmail() != null ? citoyen.getEmail() : existing.getEmail());
+	    existing.setNumeroTel(citoyen.getNumeroTel() != null ? citoyen.getNumeroTel() : existing.getNumeroTel());
+	    existing.setAdresse(citoyen.getAdresse() != null ? citoyen.getAdresse() : existing.getAdresse());
+
+	    if (citoyen.getPassword() != null && !citoyen.getPassword().isEmpty()) {
+	        existing.setPassword(citoyen.getPassword());
+	    }
+
+	    // save 
+	    return (Citoyen) utilisateurRepository.save(existing);
 	}
 
 	@Override
 	public boolean supprimerCitoyen(String id) {
-		// TODO Auto-generated method stub
-		return false;
+		  
+	    if (!utilisateurRepository.existsById(id)) {
+	        throw new RuntimeException("❌ Citoyen non trouvé !");
+	    }
+
+	    utilisateurRepository.deleteById(id);
+	    return true;
 	}
 
 	@Override
@@ -72,30 +116,86 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
 	@Override
 	public Agent ajouterUnAgent(Agent agent) {
-		return agentRepository.save(agent);
+
+	    // check if  email 
+		boolean emailExiste = utilisateurRepository.findByEmail(agent.getEmail()).isPresent();
+	    if (emailExiste) {
+	        // ⚡ Renvoyer un code HTTP 409 Conflict
+	        throw new ResponseStatusException(
+	            HttpStatus.CONFLICT, "❌ agent existe déjà avec cet email !");
+	    }
+	
+	    agent.setRole(RoleUtilisateur.AGENT);
+
+	    //  save in MongoDB
+	    return utilisateurRepository.save(agent);
 	}
 
 	@Override
-	public List<Agent> getTousLesAgents() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<AgentDTO> getTousLesAgents() {
+		 return utilisateurRepository.findByRole(Agent.RoleUtilisateur.AGENT)
+		            .stream()
+		            .map(a -> AgentMapper.toDTO((Agent) a)) // transformer entité en DTO
+		            .toList();
 	}
 
 	@Override
 	public long getNbAgent() {
-		// TODO Auto-generated method stub
-		return 0;
+	    return utilisateurRepository.countByRole(Agent.RoleUtilisateur.AGENT);
+
 	}
 
+	
+	
+	//**************************************WATING FOR TOURNNEEµµµµµµµµµµµµµµµµµ
+	
 	@Override
 	public boolean marqueDebutTournee(String agentId) {
-		// TODO Auto-generated method stub
+		/*
+		 * // Vérifier si l'agent existe et est un Agent Optional<Agent> agentOpt =
+		 * utilisateurRepository.findById(agentId) .filter(u -> u instanceof Agent)
+		 * .map(u -> (Agent) u);
+		 * 
+		 * if (agentOpt.isEmpty()) { return false; // agent non trouvé }
+		 * 
+		 * Agent agent = agentOpt.get();
+		 * 
+		 * // Trouver la tournée planifiée pour ce chauffeur Optional<Tournee>
+		 * tourneeOpt = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 * EtatTournee.PLANIFIEE);
+		 * 
+		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
+		 * tournee.setEtat(EtatTournee.ENCOURS);
+		 * tournee.setDateDebut(LocalDateTime.now()); tourneeRepository.save(tournee);
+		 * return true; // tournée démarrée }
+		 * 
+		 * return false; // aucune tournée planifiée trouvée }
+		 */
 		return false;
 	}
 
 	@Override
 	public boolean marqueFinTournee(String agentId) {
-		// TODO Auto-generated method stub
+		/*
+		 * // Vérifier si l'agent existe et est un Agent Optional<Agent> agentOpt =
+		 * utilisateurRepository.findById(agentId) .filter(u -> u instanceof Agent)
+		 * .map(u -> (Agent) u);
+		 * 
+		 * if (agentOpt.isEmpty()) { return false; // agent non trouvé }
+		 * 
+		 * Agent agent = agentOpt.get();
+		 * 
+		 * // Trouver la tournée en cours pour ce chauffeur Optional<Tournee> tourneeOpt
+		 * = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 * EtatTournee.ENCOURS);
+		 * 
+		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
+		 * tournee.setEtat(EtatTournee.TERMINEE);
+		 * tournee.setDateFin(LocalDateTime.now()); tourneeRepository.save(tournee);
+		 * return true; // tournée terminée }
+		 * 
+		 * return false; // aucune tournée en cours trouvée }
+		 */
 		return false;
 	}
 
@@ -104,17 +204,34 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	// admin 
 	@Override
 	public Agent modifierUnAgent(Agent agent) {
-		// TODO Auto-generated method stub
-		return null;
+		 
+	    Agent agentExistant = (Agent) utilisateurRepository.findById(agent.getId())
+	            .orElseThrow(() -> new RuntimeException("❌ Agent non trouvé !"));
+
+	    agentExistant.setNom(agent.getNom());
+	    agentExistant.setPrenom(agent.getPrenom());
+	    agentExistant.setEmail(agent.getEmail());
+	    agentExistant.setNumeroTel(agent.getNumeroTel());
+	    agentExistant.setDisponibilite(agent.getDisponibilite());
+	    agentExistant.setPlageHoraire(agent.getPlageHoraire());
+	    agentExistant.setTache(agent.getTache());
+
+	    
+	    return (Agent) utilisateurRepository.save(agentExistant);
 	}
 
 	@Override
 	public boolean supprimerUnAgent(String id) {
-		// TODO Auto-generated method stub
-		return false;
+		  
+	    if (!utilisateurRepository.existsById(id)) {
+	        throw new RuntimeException("❌ Agent non trouvé !");
+	    }
+
+	    utilisateurRepository.deleteById(id);
+	    return true;
 	}
 
 	@Override
@@ -122,6 +239,26 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
+	// false  
+@Override
+public List<Utilisateur> getAgentsByTacheEtDisponibilite(Agent.TypeTache tache, Boolean dispo) {
+    return null;
+    
+}
+//for islem
+@Override
 
+public List<Agent> getAgentsDisponiblesParTache(Agent.TypeTache tache) {
+    // Récupérer tous les utilisateurs avec rôle AGENT
+    List<Utilisateur> utilisateurs = utilisateurRepository.findByRole(RoleUtilisateur.AGENT);
+
+    // Filtrer uniquement les Agents correspondant à la tâche et disponibles
+    return utilisateurs.stream()
+            .filter(u -> u instanceof Agent)           // s'assurer que c'est un Agent
+            .map(u -> (Agent) u)                        // cast en Agent
+            .filter(a -> a.getTache() == tache && Boolean.TRUE.equals(a.getDisponibilite()))
+            .collect(Collectors.toList());
+}
 }

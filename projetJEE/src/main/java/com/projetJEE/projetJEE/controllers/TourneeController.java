@@ -1,11 +1,14 @@
 package com.projetJEE.projetJEE.controllers;
 
 import com.projetJEE.projetJEE.dto.TourneeDto;
+import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 import com.projetJEE.projetJEE.services.TourneeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -16,12 +19,15 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class TourneeController {
 
+    private static final Logger logger = LoggerFactory.getLogger(TourneeController.class);
+
     @Autowired
     private TourneeService tourneeService;
 
     @GetMapping
     public ResponseEntity<List<TourneeDto>> getAllTournees() {
         List<TourneeDto> tournees = tourneeService.getAllTournees();
+        logger.info("Fetched tournees: {}", tournees);
         return ResponseEntity.ok(tournees);
     }
 
@@ -63,16 +69,8 @@ public class TourneeController {
 
     @PutMapping("/{id}/affecter-agent/{agentId}")
     public ResponseEntity<TourneeDto> affecterAgent(@PathVariable String id, @PathVariable String agentId) {
-        try {
-            TourneeDto updatedTournee = tourneeService.affecterAgent(id, agentId);
-            if (updatedTournee != null) {
-                return ResponseEntity.ok(updatedTournee);
-            } else {
-                return ResponseEntity.badRequest().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
+        TourneeDto updatedTournee = tourneeService.affecterAgent(id, agentId);
+        return ResponseEntity.ok(updatedTournee);
     }
 
     @PutMapping("/{id}/affecter-vehicule/{vehiculeId}")

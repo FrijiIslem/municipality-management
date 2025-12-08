@@ -7,11 +7,13 @@ import com.projetJEE.projetJEE.entities.Vehicule;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 import com.projetJEE.projetJEE.mapper.TourneeMapper;
 import com.projetJEE.projetJEE.repository.TourneeRepository;
-import com.projetJEE.projetJEE.repository.AgentRepository;
 import com.projetJEE.projetJEE.repository.VehiculeRepository;
+import com.projetJEE.projetJEE.repository.UtilisateurRepository;
 import com.projetJEE.projetJEE.services.TourneeService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.projetJEE.projetJEE.exceptions.ResourceNotFoundException;
 
 @Service
 public class TourneeServiceImpl implements TourneeService {
@@ -28,11 +31,11 @@ public class TourneeServiceImpl implements TourneeService {
     private TourneeRepository tourneeRepository;
     
     @Autowired
-    private AgentRepository agentRepository;
-    
-    @Autowired
     private VehiculeRepository vehiculeRepository;
     
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
     @Autowired
     private TourneeMapper tourneeMapper;
 
@@ -43,11 +46,13 @@ public class TourneeServiceImpl implements TourneeService {
 
     @Override
     public TourneeDto getTourneeById(String id) {
-        Optional<Tournee> tournee = tourneeRepository.findById(id);
-        return tournee.map(tourneeMapper::toDTO).orElse(null);
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+        return tourneeMapper.toDTO(tournee);
     }
 
     @Override
+    @Transactional
     public TourneeDto createTournee(TourneeDto tourneeDto) {
         Tournee tournee = tourneeMapper.toEntity(tourneeDto);
         Tournee savedTournee = tourneeRepository.save(tournee);
@@ -55,6 +60,7 @@ public class TourneeServiceImpl implements TourneeService {
     }
 
     @Override
+    @Transactional
     public TourneeDto planifierTournee(TourneeDto tourneeDto) {
         tourneeDto.setEtat(EtatTournee.PLANIFIEE);
         tourneeDto.setDateDebut(LocalDateTime.now());
@@ -62,157 +68,139 @@ public class TourneeServiceImpl implements TourneeService {
     }
 
     @Override
+    @Transactional
     public TourneeDto updateTournee(String id, TourneeDto tourneeDto) {
-        Optional<Tournee> existingTournee = tourneeRepository.findById(id);
-        if (existingTournee.isPresent()) {
-            Tournee tournee = existingTournee.get();
-            tournee.setId(tourneeDto.getId());
-            tournee.setConteneurs(tourneeMapper.toEntity(tourneeDto).getConteneurs());
-            tournee.setAgentChauffeur(tourneeMapper.toEntity(tourneeDto).getAgentChauffeur());
-            tournee.setAgentRamasseurs(tourneeMapper.toEntity(tourneeDto).getAgentRamasseurs());
+        return tourneeRepository.findById(id).map(tournee -> {
+            Tournee source = tourneeMapper.toEntity(tourneeDto);
+            tournee.setConteneurs(source.getConteneurs());
+            tournee.setAgentChauffeur(source.getAgentChauffeur());
+            tournee.setAgentRamasseurs(source.getAgentRamasseurs());
             tournee.setDateDebut(tourneeDto.getDateDebut());
             tournee.setDateFin(tourneeDto.getDateFin());
             tournee.setItineraire(tourneeDto.getItineraire());
             tournee.setEtat(tourneeDto.getEtat());
-            tournee.setVehicule(tourneeMapper.toEntity(tourneeDto).getVehicule());
-            
+            tournee.setVehicule(source.getVehicule());
+
             Tournee updatedTournee = tourneeRepository.save(tournee);
             return tourneeMapper.toDTO(updatedTournee);
-        }
-        return null;
+        }).orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
     }
 
     @Override
+    @Transactional
     public TourneeDto validerTournee(String id) {
-        Optional<Tournee> tournee = tourneeRepository.findById(id);
-        if (tournee.isPresent()) {
-            Tournee t = tournee.get();
-            t.setEtat(EtatTournee.ENCOURS);
-            Tournee saved = tourneeRepository.save(t);
-            return tourneeMapper.toDTO(saved);
-        }
-        return null;
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+        tournee.setEtat(EtatTournee.ENCOURS);
+        Tournee saved = tourneeRepository.save(tournee);
+        return tourneeMapper.toDTO(saved);
     }
 
     @Override
+    @Transactional
     public TourneeDto libererTournee(String id) {
-        Optional<Tournee> tournee = tourneeRepository.findById(id);
-        if (tournee.isPresent()) {
-            Tournee t = tournee.get();
-            t.setEtat(EtatTournee.TERMINEE);
-            t.setDateFin(LocalDateTime.now());
-            
-            // Libérer les ressources (remettre les agents et véhicule en disponible)
-            if (t.getAgentChauffeur() != null) {
-                t.getAgentChauffeur().setDisponibilite(true);
-                agentRepository.save(t.getAgentChauffeur());
-            }
-            
-            if (t.getAgentRamasseurs() != null) {
-                t.getAgentRamasseurs().forEach(agent -> {
-                    agent.setDisponibilite(true);
-                    agentRepository.save(agent);
-                });
-            }
-            
-            if (t.getVehicule() != null) {
-                t.getVehicule().setDisponibilite(true);
-                vehiculeRepository.save(t.getVehicule());
-            }
-            
-            Tournee saved = tourneeRepository.save(t);
-            return tourneeMapper.toDTO(saved);
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+
+        tournee.setEtat(EtatTournee.TERMINEE);
+        tournee.setDateFin(LocalDateTime.now());
+
+        // Libérer les ressources (remettre les agents et véhicule en disponible)
+        if (tournee.getAgentChauffeur() != null) {
+            tournee.getAgentChauffeur().setDisponibilite(true);
         }
-        return null;
+
+        if (tournee.getAgentRamasseurs() != null) {
+            tournee.getAgentRamasseurs().forEach(agent -> {
+                agent.setDisponibilite(true);
+            });
+        }
+
+        if (tournee.getVehicule() != null) {
+            tournee.getVehicule().setDisponibilite(true);
+            vehiculeRepository.save(tournee.getVehicule());
+        }
+
+        Tournee saved = tourneeRepository.save(tournee);
+        return tourneeMapper.toDTO(saved);
     }
 
     @Override
+    @Transactional
     public TourneeDto affecterAgent(String tourneeId, String agentId) {
-        Optional<Tournee> tourneeOpt = tourneeRepository.findById(tourneeId);
-        if (tourneeOpt.isEmpty()) {
-            // Or throw a specific exception like TourneeNotFoundException
-            return null;
+        Tournee tournee = tourneeRepository.findById(tourneeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + tourneeId));
+
+        Agent agent = utilisateurRepository.findById(agentId)
+                .filter(u -> u instanceof Agent)
+                .map(u -> (Agent) u)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found with id: " + agentId));
+
+        if (!Boolean.TRUE.equals(agent.getDisponibilite())) {
+            throw new IllegalStateException("Agent with id " + agent.getId() + " is not available.");
         }
 
-        Optional<Agent> agentOpt = agentRepository.findById(agentId);
-        if (agentOpt.isEmpty()) {
-            // Or throw AgentNotFoundException
-            return null;
-        }
-
-        Tournee tournee = tourneeOpt.get();
-        Agent agent = agentOpt.get();
-
-        if (!agent.getDisponibilite()) {
-            // Or throw AgentNotAvailableException
-            return null;
-        }
-
-        if ("chauffeur".equalsIgnoreCase(agent.getTache())) {
-            // Release previous chauffeur if exists
+        if (agent.getTache() == Agent.TypeTache.CHAUFFEUR) {
             if (tournee.getAgentChauffeur() != null) {
-                Agent previousChauffeur = tournee.getAgentChauffeur();
-                previousChauffeur.setDisponibilite(true);
-                agentRepository.save(previousChauffeur);
+                tournee.getAgentChauffeur().setDisponibilite(true);
+                utilisateurRepository.save(tournee.getAgentChauffeur());
             }
             tournee.setAgentChauffeur(agent);
             agent.setDisponibilite(false);
-        } else if ("collecte".equalsIgnoreCase(agent.getTache())) {
+        } else if (agent.getTache() == Agent.TypeTache.COLLECTE) {
             List<Agent> collectors = tournee.getAgentRamasseurs() != null ? new ArrayList<>(tournee.getAgentRamasseurs()) : new ArrayList<>();
             if (collectors.size() < 2) {
                 collectors.add(agent);
                 tournee.setAgentRamasseurs(collectors);
                 agent.setDisponibilite(false);
             } else {
-                // Or throw MaxCollectorsReachedException
-                return null;
+                throw new IllegalStateException("Maximum number of collectors (2) reached for tournee: " + tourneeId);
             }
         } else {
-            // Or throw InvalidAgentRoleException
-            return null;
+            throw new IllegalArgumentException("Agent with id " + agent.getId() + " has an invalid role: " + agent.getTache());
         }
 
-        agentRepository.save(agent);
+        utilisateurRepository.save(agent);
         Tournee updatedTournee = tourneeRepository.save(tournee);
         return tourneeMapper.toDTO(updatedTournee);
     }
 
     @Override
+    @Transactional
     public TourneeDto affectervehicule(String id, String vehiculeId) {
-        Optional<Tournee> tourneeOpt = tourneeRepository.findById(id);
-        Optional<Vehicule> vehiculeOpt = vehiculeRepository.findById(vehiculeId);
-        
-        if (tourneeOpt.isPresent() && vehiculeOpt.isPresent()) {
-            Tournee tournee = tourneeOpt.get();
-            Vehicule vehicule = vehiculeOpt.get();
-            
-            // Vérifier si le véhicule est disponible
-            if (vehicule.isDisponibilite()) {
-                tournee.setVehicule(vehicule);
-                vehicule.setDisponibilite(false); // Marquer le véhicule comme non disponible
-                vehiculeRepository.save(vehicule);
-                Tournee saved = tourneeRepository.save(tournee);
-                return tourneeMapper.toDTO(saved);
-            }
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+
+        Vehicule vehicule = vehiculeRepository.findById(vehiculeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId));
+
+        if (!vehicule.isDisponibilite()) {
+            // Consider throwing a specific VehiculeNotAvailableException
+            throw new IllegalStateException("Vehicule with id " + vehiculeId + " is not available.");
         }
-        return null;
+
+        tournee.setVehicule(vehicule);
+        vehicule.setDisponibilite(false);
+        vehiculeRepository.save(vehicule);
+
+        Tournee saved = tourneeRepository.save(tournee);
+        return tourneeMapper.toDTO(saved);
     }
 
     @Override
+    @Transactional
     public void deleteTournee(String id) {
         tourneeRepository.deleteById(id);
     }
 
     @Override
     public Duration getDureeTournee(String id) {
-        Optional<Tournee> tournee = tourneeRepository.findById(id);
-        if (tournee.isPresent()) {
-            Tournee t = tournee.get();
-            if (t.getDateDebut() != null && t.getDateFin() != null) {
-                return Duration.between(t.getDateDebut(), t.getDateFin());
+        return tourneeRepository.findById(id).map(tournee -> {
+            if (tournee.getDateDebut() != null && tournee.getDateFin() != null) {
+                return Duration.between(tournee.getDateDebut(), tournee.getDateFin());
             }
-        }
-        return Duration.ZERO;
+            return Duration.ZERO;
+        }).orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
     }
 
     @Override
@@ -221,6 +209,7 @@ public class TourneeServiceImpl implements TourneeService {
                 .map(tourneeMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public Double getDureeMoyenneTournees() {
@@ -238,104 +227,4 @@ public class TourneeServiceImpl implements TourneeService {
                 .map(tourneeMapper::toDTO)
                 .collect(Collectors.toList());
     }
-    
-    // Legacy methods for backward compatibility
-   @Override
-public void affecterTournee(String tourneeId, String chauffeurId, String vehiculeId) {
-    Optional<Tournee> tourneeOpt = tourneeRepository.findById(tourneeId);
-    
-    if (tourneeOpt.isEmpty()) {
-        return; // Or throw an exception if preferred
-    }
-
-    Tournee tournee = tourneeOpt.get();
-    
-    try {
-        // 1. Assign chauffeur
-        if (chauffeurId != null) {
-            agentRepository.findById(chauffeurId).ifPresent(chauffeur -> {
-                if ("chauffeur".equalsIgnoreCase(chauffeur.getTache()) && chauffeur.getDisponibilite()) {
-                    // If there's an existing chauffeur, mark them as available first
-                    if (tournee.getAgentChauffeur() != null) {
-                        tournee.getAgentChauffeur().setDisponibilite(true);
-                        agentRepository.save(tournee.getAgentChauffeur());
-                    }
-                    
-                    tournee.setAgentChauffeur(chauffeur);
-                    chauffeur.setDisponibilite(false);
-                    agentRepository.save(chauffeur);
-                }
-            });
-        }
-
-        // 2. Assign vehicle
-        if (vehiculeId != null) {
-            vehiculeRepository.findById(vehiculeId).ifPresent(vehicule -> {
-                if (vehicule.isDisponibilite()) {
-                    // If there's an existing vehicle, mark it as available first
-                    if (tournee.getVehicule() != null) {
-                        tournee.getVehicule().setDisponibilite(true);
-                        vehiculeRepository.save(tournee.getVehicule());
-                    }
-                    
-                    tournee.setVehicule(vehicule);
-                    vehicule.setDisponibilite(false);
-                    vehiculeRepository.save(vehicule);
-                }
-            });
-        }
-
-        // 3. Assign two collection agents
-        List<Agent> availableCollectAgents = agentRepository.findByTacheAndDisponibiliteTrue("collecte");
-        
-        // Release any previously assigned collectors
-        if (tournee.getAgentRamasseurs() != null) {
-            tournee.getAgentRamasseurs().forEach(agent -> {
-                agent.setDisponibilite(true);
-                agentRepository.save(agent);
-            });
-        }
-
-        // Assign up to 2 available collectors
-        if (!availableCollectAgents.isEmpty()) {
-            int agentsToAssign = Math.min(2, availableCollectAgents.size());
-            List<Agent> assignedAgents = availableCollectAgents.subList(0, agentsToAssign);
-            
-            assignedAgents.forEach(agent -> {
-                agent.setDisponibilite(false);
-                agentRepository.save(agent);
-            });
-            
-            tournee.setAgentRamasseurs(assignedAgents);
-        } else {
-            tournee.setAgentRamasseurs(Collections.emptyList()); // Clear if no agents available
-        }
-
-        // 4. Save the updated tournee
-        tourneeRepository.save(tournee);
-        
-    } catch (Exception e) {
-        // Handle or log the exception as needed
-        throw new RuntimeException("Error assigning tour: " + e.getMessage(), e);
-    }
-}
-
-    @Override
-    public void supprimerTournee(String tourneeId) {
-        deleteTournee(tourneeId);
-    }
-
-    @Override
-    public TourneeDto modifierTournee(TourneeDto dto) {
-        return updateTournee(dto.getId(), dto);
-    }
-
-    @Override
-    public double moyenneDureeTournees() {
-        return getDureeMoyenneTournees();
-    }
-
-	
-    
-    
 }

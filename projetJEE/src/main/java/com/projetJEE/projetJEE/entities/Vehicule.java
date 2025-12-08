@@ -22,4 +22,5 @@ public class Vehicule {
     private float capaciteMax;
 
     private boolean disponibilite;
+
 }
