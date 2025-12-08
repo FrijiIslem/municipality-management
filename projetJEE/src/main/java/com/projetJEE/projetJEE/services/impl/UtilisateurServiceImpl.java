@@ -1,8 +1,11 @@
 package com.projetJEE.projetJEE.services.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,21 +29,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
+    private static final Logger logger = LoggerFactory.getLogger(UtilisateurServiceImpl.class);
+
     private final UtilisateurRepository utilisateurRepository;
     private final IncidentRepository incidentRepository;
 
 	@Override
 	public boolean authentifier(String email, String password) {
-	    return utilisateurRepository.findByEmail(email)
-	            .filter(u -> u.getPassword().equals(password))
-	            .isPresent();
+	    List<Utilisateur> matches = utilisateurRepository.findAllByEmail(email);
+	    if (matches.isEmpty()) {
+	        return false;
+	    }
+	    if (matches.size() > 1) {
+	        logger.warn("Plusieurs utilisateurs partagent le même email {}. Vérifiez les données MongoDB.", email);
+	    }
+	    return matches.stream().anyMatch(u -> Objects.equals(u.getPassword(), password));
 	}
 
 	@Override
 	public Citoyen ajouterCitoyen(Citoyen citoyen) {
 
 	    // check if  email 
-		boolean emailExiste = utilisateurRepository.findByEmail(citoyen.getEmail()).isPresent();
+		boolean emailExiste = !utilisateurRepository.findAllByEmail(citoyen.getEmail()).isEmpty();
 	    if (emailExiste) {
 	        // ⚡ Renvoyer un code HTTP 409 Conflict
 	        throw new ResponseStatusException(
@@ -116,19 +126,17 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
 	@Override
 	public Agent ajouterUnAgent(Agent agent) {
+    	List<Utilisateur> matches = utilisateurRepository.findAllByEmail(agent.getEmail());
+    	if (!matches.isEmpty()) {
+    	    logger.warn("Tentative d'ajout d'un agent avec un email déjà utilisé {} ({} occurrences).",
+        	        agent.getEmail(), matches.size());
+        	throw new ResponseStatusException(
+            	HttpStatus.CONFLICT, "❌ agent existe déjà avec cet email !");
+    	}
 
-	    // check if  email 
-		boolean emailExiste = utilisateurRepository.findByEmail(agent.getEmail()).isPresent();
-	    if (emailExiste) {
-	        // ⚡ Renvoyer un code HTTP 409 Conflict
-	        throw new ResponseStatusException(
-	            HttpStatus.CONFLICT, "❌ agent existe déjà avec cet email !");
-	    }
-	
-	    agent.setRole(RoleUtilisateur.AGENT);
+    	agent.setRole(RoleUtilisateur.AGENT);
 
-	    //  save in MongoDB
-	    return utilisateurRepository.save(agent);
+    	return utilisateurRepository.save(agent);
 	}
 
 	@Override

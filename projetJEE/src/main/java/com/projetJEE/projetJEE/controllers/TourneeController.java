@@ -16,7 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tournees")
-@CrossOrigin(origins = "*")
 public class TourneeController {
 
     private static final Logger logger = LoggerFactory.getLogger(TourneeController.class);

@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', sans-serif;
+  background-color: #F5F5F5;
+  color: #263238;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-card shadow-card p-6;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-card-hover;
+  }
+  
+  .btn-primary {
+    @apply bg-eco-green text-white px-6 py-2.5 rounded-lg font-medium 
+           transition-all duration-200 hover:bg-opacity-90 
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply bg-urban-blue text-white px-6 py-2.5 rounded-lg font-medium 
+           transition-all duration-200 hover:bg-opacity-90 
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-eco-green text-eco-green px-6 py-2.5 rounded-lg 
+           font-medium transition-all duration-200 hover:bg-eco-green hover:text-white 
+           active:scale-95;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-eco-green focus:border-transparent
+           transition-all duration-200;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .badge-danger {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+}
+
+/* Container fill state colors */
+.container-empty {
+  @apply bg-green-500;
+}
+
+.container-low {
+  @apply bg-yellow-500;
+}
+
+.container-medium {
+  @apply bg-orange-500;
+}
+
+.container-full {
+  @apply bg-red-500;
+}
+

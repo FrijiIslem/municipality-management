@@ -13,7 +13,8 @@ import java.util.Optional;
 
 public interface UtilisateurRepository extends MongoRepository<Utilisateur, String> {
 
-    Optional<Utilisateur> findByEmail(String email);
+    
+    List<Utilisateur> findAllByEmail(String email);
     boolean existsByEmail(String email);
     List<Utilisateur> findByRole(RoleUtilisateur role);
     long countByRole(Utilisateur.RoleUtilisateur role);
