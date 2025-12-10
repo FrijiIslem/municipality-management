@@ -15,10 +15,12 @@ const TourMap = ({
   containers = [], 
   route = [], 
   center = { lat: 36.8065, lng: 10.1815 }, // Default: Tunis
-  zoom = 13 
+  zoom = 13
 }) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+  
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    googleMapsApiKey: apiKey,
     libraries,
   })
 
@@ -42,12 +44,38 @@ const TourMap = ({
     return containerColors[etatRemplissage] || containerColors.VIDE
   }
 
+  // Si pas de clé API, afficher un message informatif
+  if (!apiKey) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
+        <div className="text-center p-6">
+          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-anthracite font-semibold mb-2">Clé API Google Maps requise</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Veuillez configurer VITE_GOOGLE_MAPS_API_KEY dans le fichier .env
+          </p>
+          <a
+            href="https://console.cloud.google.com/google/maps-apis"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-eco-green hover:underline text-sm"
+          >
+            Obtenir une clé API →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   if (loadError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center">
+        <div className="text-center p-6">
           <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-anthracite">Erreur de chargement de la carte</p>
+          <p className="text-anthracite font-semibold mb-2">Erreur de chargement de la carte</p>
+          <p className="text-sm text-gray-600">
+            {loadError.message || 'Vérifiez votre clé API Google Maps'}
+          </p>
         </div>
       </div>
     )
@@ -96,24 +124,30 @@ const TourMap = ({
         )}
 
         {/* Container markers */}
-        {containers.map((container) => (
+        {containers?.filter(container => {
+          const lat = parseFloat(container?.localisation?.latitude);
+          const lng = parseFloat(container?.localisation?.longitude);
+          return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
+        }).map((container) => {
+          const lat = parseFloat(container.localisation.latitude);
+          const lng = parseFloat(container.localisation.longitude);
+          
+          return (
           <Marker
             key={container.id}
-            position={{
-              lat: container.localisation?.latitude || center.lat,
-              lng: container.localisation?.longitude || center.lng,
-            }}
+            position={{ lat, lng }}
             icon={{
               path: window.google?.maps?.SymbolPath?.CIRCLE,
               scale: 10,
-              fillColor: getContainerColor(container.etatRemplissage),
+              fillColor: getContainerColor(container.etatRemplissage || 'VIDE'),
               fillOpacity: 0.8,
               strokeColor: '#fff',
               strokeWeight: 2,
             }}
             title={`Conteneur ${container.id} - ${container.etatRemplissage}`}
           />
-        ))}
+        );
+        })}
       </GoogleMap>
     </div>
   )

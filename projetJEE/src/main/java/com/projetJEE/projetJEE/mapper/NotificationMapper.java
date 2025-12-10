@@ -3,10 +3,11 @@ package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.NotificationDto;
 import com.projetJEE.projetJEE.entities.Notification;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Component
 public class NotificationMapper {
 

@@ -21,5 +21,16 @@ public interface UtilisateurRepository extends MongoRepository<Utilisateur, Stri
     //// ana zedthaaa islem
         @Query("{ 'role': ?0, 'tache': ?1, 'disponibilite': ?2 }")
     List<Utilisateur> findByRoleAndTacheAndDisponibilite(RoleUtilisateur role, Agent.TypeTache tache, Boolean disponibilite);
+        Optional<Utilisateur> findByEmail(String email);
 
+
+     
+
+
+        // for islem 
+        //List<Utilisateur> findByRoleAndTacheAndDisponibilite(RoleUtilisateur role, 
+
+        //Agent.TypeTache tache, 
+
+        //Boolean disponibilite);
 }

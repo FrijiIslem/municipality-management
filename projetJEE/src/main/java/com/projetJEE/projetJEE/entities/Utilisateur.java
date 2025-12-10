@@ -1,18 +1,18 @@
 package com.projetJEE.projetJEE.entities;
 
-import lombok.Data;    
-import lombok.Builder;
-import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Builder
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "utilisateurs")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Utilisateur {
 
     public enum RoleUtilisateur {
@@ -30,10 +30,21 @@ public class Utilisateur {
     @Id
     private String id;
 
+    @JsonProperty("email")
     private String email;
+    
+    @JsonProperty("nom")
     private String nom;
+    
+    @JsonProperty("numeroTel")
     private Long numeroTel;
+    
+    @JsonProperty("password")
     private String password;
+    
+    @JsonProperty("prenom")
     private String prenom;
+    
+    @JsonProperty("role")
     private RoleUtilisateur role;
 }

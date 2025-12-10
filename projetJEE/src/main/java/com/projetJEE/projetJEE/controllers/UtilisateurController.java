@@ -1,8 +1,13 @@
 package com.projetJEE.projetJEE.controllers;
 import java.util.List;		
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetJEE.projetJEE.dto.AgentDTO;
 import com.projetJEE.projetJEE.dto.CitoyenDTO;
 import com.projetJEE.projetJEE.entities.Agent;
@@ -30,7 +35,18 @@ public class UtilisateurController {
     }
     @PostMapping("/agents")
     public Agent ajouterAgent(@RequestBody Agent agent) {
-        return utilisateurService.ajouterUnAgent(agent);
+        // Log pour déboguer
+        System.out.println("=== DEBUG: Agent reçu ===");
+        System.out.println("Agent object: " + agent);
+        System.out.println("Email: " + agent.getEmail());
+        System.out.println("Nom: " + agent.getNom());
+        System.out.println("Prenom: " + agent.getPrenom());
+        System.out.println("Password: " + (agent.getPassword() != null ? "***" : "null"));
+        System.out.println("NumeroTel: " + agent.getNumeroTel());
+        System.out.println("Tache: " + agent.getTache());
+        System.out.println("Disponibilite: " + agent.getDisponibilite());
+        System.out.println("All fields: " + agent.toString());
+        return utilisateurService.ajouterAgent(agent);
     }
     //---------------get all-----------------------
     @GetMapping("/getcitoyens")

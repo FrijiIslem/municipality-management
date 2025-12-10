@@ -48,19 +48,49 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
 	@Override
 	public Citoyen ajouterCitoyen(Citoyen citoyen) {
+        // Vérifier que les champs obligatoires ne sont pas null
+        if (citoyen.getEmail() == null || citoyen.getEmail().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ L'email est obligatoire !");
+        }
+        if (citoyen.getPassword() == null || citoyen.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le mot de passe est obligatoire !");
+        }
+        if (citoyen.getNom() == null || citoyen.getNom().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le nom est obligatoire !");
+        }
+        if (citoyen.getPrenom() == null || citoyen.getPrenom().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le prénom est obligatoire !");
+        }
 
-	    // check if  email 
+        // Vérifier si l'email existe déjà
 		boolean emailExiste = !utilisateurRepository.findAllByEmail(citoyen.getEmail()).isEmpty();
 	    if (emailExiste) {
-	        // ⚡ Renvoyer un code HTTP 409 Conflict
 	        throw new ResponseStatusException(
 	            HttpStatus.CONFLICT, "❌ Citoyen existe déjà avec cet email !");
 	    }
 	
-	    citoyen.setRole(RoleUtilisateur.CITOYEN);
+        // Créer un nouveau citoyen avec toutes les valeurs
+        Citoyen citoyenToSave = new Citoyen();
+        citoyenToSave.setNom(citoyen.getNom().trim());
+        citoyenToSave.setPrenom(citoyen.getPrenom().trim());
+        citoyenToSave.setEmail(citoyen.getEmail().trim());
+        citoyenToSave.setPassword(citoyen.getPassword());
+        citoyenToSave.setRole(RoleUtilisateur.CITOYEN);
+        
+        // Champs optionnels
+        if (citoyen.getNumeroTel() != null) {
+            citoyenToSave.setNumeroTel(citoyen.getNumeroTel());
+        }
+        if (citoyen.getAdresse() != null && !citoyen.getAdresse().trim().isEmpty()) {
+            citoyenToSave.setAdresse(citoyen.getAdresse().trim());
+        }
 
-	    //  save in MongoDB
-	    return utilisateurRepository.save(citoyen);
+        // Sauvegarder dans MongoDB
+	    return utilisateurRepository.save(citoyenToSave);
 	}
 
 	@Override
@@ -125,19 +155,60 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 	}
 
 	@Override
-	public Agent ajouterUnAgent(Agent agent) {
-    	List<Utilisateur> matches = utilisateurRepository.findAllByEmail(agent.getEmail());
-    	if (!matches.isEmpty()) {
-    	    logger.warn("Tentative d'ajout d'un agent avec un email déjà utilisé {} ({} occurrences).",
-        	        agent.getEmail(), matches.size());
-        	throw new ResponseStatusException(
-            	HttpStatus.CONFLICT, "❌ agent existe déjà avec cet email !");
-    	}
+	public Agent ajouterAgent(Agent agent) {
+        // Vérifier que les champs obligatoires ne sont pas null
+        if (agent.getEmail() == null || agent.getEmail().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ L'email est obligatoire !");
+        }
+        if (agent.getPassword() == null || agent.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le mot de passe est obligatoire !");
+        }
+        if (agent.getNom() == null || agent.getNom().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le nom est obligatoire !");
+        }
+        if (agent.getPrenom() == null || agent.getPrenom().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "❌ Le prénom est obligatoire !");
+        }
 
-    	agent.setRole(RoleUtilisateur.AGENT);
+        // Vérifier si l'email existe déjà
+        List<Utilisateur> matches = utilisateurRepository.findAllByEmail(agent.getEmail());
+        if (!matches.isEmpty()) {
+            logger.warn("Tentative d'ajout d'un agent avec un email déjà utilisé {} ({} occurrences).",
+                    agent.getEmail(), matches.size());
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "❌ agent existe déjà avec cet email !");
+        }
 
-    	return utilisateurRepository.save(agent);
-	}
+        // Créer un nouvel agent avec toutes les valeurs
+        Agent agentToSave = new Agent();
+        agentToSave.setNom(agent.getNom().trim());
+        agentToSave.setPrenom(agent.getPrenom().trim());
+        agentToSave.setEmail(agent.getEmail().trim());
+        agentToSave.setPassword(agent.getPassword());
+        agentToSave.setRole(RoleUtilisateur.AGENT);
+        
+        // Champs optionnels
+        if (agent.getNumeroTel() != null) {
+            agentToSave.setNumeroTel(agent.getNumeroTel());
+        }
+        if (agent.getDisponibilite() != null) {
+            agentToSave.setDisponibilite(agent.getDisponibilite());
+        } else {
+            agentToSave.setDisponibilite(true); // Par défaut disponible
+        }
+        if (agent.getPlageHoraire() != null && !agent.getPlageHoraire().trim().isEmpty()) {
+            agentToSave.setPlageHoraire(agent.getPlageHoraire().trim());
+        }
+        if (agent.getTache() != null) {
+            agentToSave.setTache(agent.getTache());
+        }
+
+        return utilisateurRepository.save(agentToSave);
+    }
 
 	@Override
 	public List<AgentDTO> getTousLesAgents() {
@@ -169,8 +240,8 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		 * Agent agent = agentOpt.get();
 		 * 
 		 * // Trouver la tournée planifiée pour ce chauffeur Optional<Tournee>
-		 * tourneeOpt = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
-		 * EtatTournee.PLANIFIEE);
+		 tourneeOpt = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 EtatTournee.PLANIFIEE);
 		 * 
 		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
 		 * tournee.setEtat(EtatTournee.ENCOURS);

@@ -126,3 +126,4 @@ Si le problème persiste, partagez:
 2. Les erreurs du terminal où `npm run dev` est lancé
 3. Une capture d'écran de la page blanche
 
+

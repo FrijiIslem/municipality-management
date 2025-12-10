@@ -22,7 +22,7 @@ public interface UtilisateurServiceInterface {
     boolean supprimerCitoyen(String id);
     Incident signalerUnIncidentPourCitoyen(Incident incident, String citoyenId);
     // ----- Agent -----
-    Agent ajouterUnAgent(Agent agent);
+    Agent ajouterAgent(Agent agent);
     List<AgentDTO> getTousLesAgents();
     long getNbAgent();
     boolean marqueDebutTournee(String agentId);

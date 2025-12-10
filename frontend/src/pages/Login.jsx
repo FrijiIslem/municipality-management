@@ -1,29 +1,42 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import api from '../services/api'
+import { authAPI } from '../services/api'
+import useAuthStore from '../store/authStore'
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const { login } = useAuthStore()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Replace with actual authentication endpoint
-      const response = await api.post('/utilisateurs/auth', null, {
-        params: { email, password },
-      })
+      const response = await authAPI.login(email, password)
 
       if (response) {
-        // Store token if provided
-        // localStorage.setItem('token', response.token)
+        // Try to get user info - for now, we'll determine role from email or use a default
+        // In a real app, the backend should return user info with role
+        const userData = {
+          email,
+          role: email.includes('admin') ? 'ADMIN' : email.includes('citoyen') ? 'CITOYEN' : 'AGENT',
+        }
+        
+        login(userData, null)
         toast.success('Connexion réussie')
-        navigate('/')
+        
+        // Navigate based on role
+        if (userData.role === 'ADMIN') {
+          navigate('/admin')
+        } else if (userData.role === 'CITOYEN') {
+          navigate('/citoyen')
+        } else {
+          navigate('/')
+        }
       }
     } catch (error) {
       toast.error('Email ou mot de passe incorrect')

@@ -53,42 +53,57 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
 
       <div className="space-y-2 max-h-[600px] overflow-y-auto">
         {containers.length > 0 ? (
-          containers.map((container) => (
-            <div
-              key={container.id}
-              className="p-4 border border-gray-200 rounded-lg hover:border-eco-green transition-all"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-light-gray rounded-lg flex items-center justify-center">
-                    <Trash2 className="w-5 h-5 text-anthracite" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-anthracite">
-                      Conteneur #{container.id}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {container.localisation?.adresse || 'Adresse non disponible'}
-                    </p>
-                  </div>
-                </div>
-                <span className={`badge ${getFillStateColor(container.etatRemplissage)}`}>
-                  {getFillStateLabel(container.etatRemplissage)}
-                </span>
-              </div>
+          containers.map((container) => {
+            if (!container) return null
 
-              {isActive && container.etatRemplissage !== 'VIDE' && (
-                <button
-                  onClick={() => markEmptyMutation.mutate(container.id)}
-                  disabled={markEmptyMutation.isLoading}
-                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2 bg-eco-green bg-opacity-10 text-eco-green rounded-lg hover:bg-opacity-20 transition-colors text-sm font-medium"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Marquer comme vide
-                </button>
-              )}
-            </div>
-          ))
+            return (
+              <div
+                key={container.id}
+                className="p-4 border border-gray-200 rounded-lg hover:border-eco-green transition-all"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-light-gray rounded-lg flex items-center justify-center">
+                      <Trash2 className="w-5 h-5 text-anthracite" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-anthracite">
+                        Conteneur #{container.id}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {container?.localisation?.adresse || 'Adresse non disponible'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`badge ${getFillStateColor(container?.etatRemplissage)}`}
+                  >
+                    {getFillStateLabel(container?.etatRemplissage)}
+                  </span>
+                </div>
+
+                {isActive && container?.etatRemplissage !== 'VIDE' && (
+                  <button
+                    onClick={() =>
+                      container?.id && markEmptyMutation.mutate(container.id)
+                    }
+                    disabled={markEmptyMutation.isLoading}
+                    className={`w-full mt-2 flex items-center justify-center gap-2 px-4 py-2 
+                    bg-eco-green bg-opacity-10 text-eco-green rounded-lg 
+                    ${
+                      markEmptyMutation.isLoading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-opacity-20'
+                    } transition-colors text-sm font-medium`}
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Marquer comme vide
+                  </button>
+                )}
+              </div>
+            )
+          })
         ) : (
           <div className="text-center py-8">
             <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
@@ -101,4 +116,3 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
 }
 
 export default ContainerList
-

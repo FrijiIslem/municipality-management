@@ -10,7 +10,10 @@ import com.projetJEE.projetJEE.entities.enums.TypeNotification;
 import java.time.LocalDateTime;
 
 @Document(collection = "Notification")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Notification {
     @Id private String id;
     private LocalDateTime dateEnvoi;
