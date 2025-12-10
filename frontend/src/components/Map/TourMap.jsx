@@ -1,157 +1,130 @@
-import { useMemo } from 'react'
-import { GoogleMap, useLoadScript, Marker, Polyline } from '@react-google-maps/api'
-import { MapPin } from 'lucide-react'
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const libraries = ['places', 'geometry']
+// Fix for default marker icons in React
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Configuration de l'icône par défaut
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const containerColors = {
   VIDE: '#4CAF50',      // Green - Empty
   FAIBLE: '#FFEB3B',    // Yellow - Low
   MOYEN: '#FF9800',     // Orange - Medium
   PLEIN: '#F44336',     // Red - Full
-}
+};
 
 const TourMap = ({ 
   containers = [], 
   route = [], 
-  center = { lat: 36.8065, lng: 10.1815 }, // Default: Tunis
+  center = [36.8065, 10.1815], // [lat, lng] format pour Leaflet
   zoom = 13
 }) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
-  
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: apiKey,
-    libraries,
-  })
+  // Convertir les conteneurs au format attendu par Leaflet
+  const containerMarkers = containers
+    .filter(container => {
+      const lat = parseFloat(container?.localisation?.latitude);
+      const lng = parseFloat(container?.localisation?.longitude);
+      return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
+    })
+    .map(container => ({
+      ...container,
+      position: [
+        parseFloat(container.localisation.latitude),
+        parseFloat(container.localisation.longitude)
+      ]
+    }));
 
-  const mapOptions = useMemo(
-    () => ({
-      disableDefaultUI: false,
-      clickableIcons: true,
-      scrollwheel: true,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }],
-        },
-      ],
-    }),
-    []
-  )
+  // Convertir l'itinéraire au format attendu par Leaflet
+  const routePath = route.length > 0 
+    ? route.map(point => ({
+        lat: parseFloat(point.lat || point.latitude || point[0]),
+        lng: parseFloat(point.lng || point.longitude || point[1])
+      }))
+      .filter(point => !isNaN(point.lat) && !isNaN(point.lng))
+      .map(point => [point.lat, point.lng])
+    : [];
 
+  // Fonction pour obtenir la couleur en fonction de l'état de remplissage
   const getContainerColor = (etatRemplissage) => {
-    return containerColors[etatRemplissage] || containerColors.VIDE
-  }
-
-  // Si pas de clé API, afficher un message informatif
-  if (!apiKey) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-anthracite font-semibold mb-2">Clé API Google Maps requise</p>
-          <p className="text-sm text-gray-600 mb-4">
-            Veuillez configurer VITE_GOOGLE_MAPS_API_KEY dans le fichier .env
-          </p>
-          <a
-            href="https://console.cloud.google.com/google/maps-apis"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-eco-green hover:underline text-sm"
-          >
-            Obtenir une clé API →
-          </a>
-        </div>
-      </div>
-    )
-  }
-
-  if (loadError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-anthracite font-semibold mb-2">Erreur de chargement de la carte</p>
-          <p className="text-sm text-gray-600">
-            {loadError.message || 'Vérifiez votre clé API Google Maps'}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eco-green mx-auto mb-4"></div>
-          <p className="text-anthracite">Chargement de la carte...</p>
-        </div>
-      </div>
-    )
-  }
+    return containerColors[etatRemplissage] || containerColors.VIDE;
+  };
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden shadow-card">
-      <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%' }}
+    <div style={{ width: '100%', height: '100%' }}>
+      <MapContainer
         center={center}
         zoom={zoom}
-        options={mapOptions}
+        style={{ width: '100%', height: '100%' }}
+        scrollWheelZoom={true}
+        className="rounded-lg"
       >
-        {/* Route polyline */}
-        {route.length > 0 && (
-          <Polyline
-            path={route}
-            options={{
-              strokeColor: '#2196F3',
-              strokeOpacity: 0.8,
-              strokeWeight: 4,
-              icons: [
-                {
-                  icon: {
-                    path: window.google?.maps?.SymbolPath?.FORWARD_CLOSED_ARROW,
-                    scale: 4,
-                    strokeColor: '#2196F3',
-                  },
-                  offset: '100%',
-                  repeat: '20px',
-                },
-              ],
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        
+        {/* Marqueurs des conteneurs */}
+        {containerMarkers.map((container, index) => (
+          <Marker 
+            key={container.id || index}
+            position={container.position}
+            icon={L.divIcon({
+              className: 'custom-marker',
+              html: `
+                <div style="
+                  background-color: ${getContainerColor(container.etatRemplissage)}; 
+                  width: 20px; 
+                  height: 20px; 
+                  border-radius: 50%; 
+                  border: 2px solid white;
+                  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+                  transform: translate(-50%, -50%);
+                "></div>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            })}
+          >
+            <Popup>
+              <div className="text-sm">
+                <div className="font-semibold">Conteneur {container.id}</div>
+                <div>État: {container.etatRemplissage || 'Non spécifié'}</div>
+                {container.localisation?.adresse && (
+                  <div className="text-gray-600">{container.localisation.adresse}</div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        
+        {/* Ligne d'itinéraire */}
+        {routePath.length > 1 && (
+          <Polyline 
+            positions={routePath}
+            pathOptions={{ 
+              color: '#3b82f6', 
+              weight: 4,
+              opacity: 0.8,
+              dashArray: '5, 5'
             }}
           />
         )}
-
-        {/* Container markers */}
-        {containers?.filter(container => {
-          const lat = parseFloat(container?.localisation?.latitude);
-          const lng = parseFloat(container?.localisation?.longitude);
-          return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
-        }).map((container) => {
-          const lat = parseFloat(container.localisation.latitude);
-          const lng = parseFloat(container.localisation.longitude);
-          
-          return (
-          <Marker
-            key={container.id}
-            position={{ lat, lng }}
-            icon={{
-              path: window.google?.maps?.SymbolPath?.CIRCLE,
-              scale: 10,
-              fillColor: getContainerColor(container.etatRemplissage || 'VIDE'),
-              fillOpacity: 0.8,
-              strokeColor: '#fff',
-              strokeWeight: 2,
-            }}
-            title={`Conteneur ${container.id} - ${container.etatRemplissage}`}
-          />
-        );
-        })}
-      </GoogleMap>
+      </MapContainer>
     </div>
-  )
-}
+  );
+};
 
-export default TourMap
-
+export default TourMap;

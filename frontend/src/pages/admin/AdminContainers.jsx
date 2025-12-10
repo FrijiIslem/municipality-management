@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { containerAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
@@ -6,29 +6,33 @@ import { Trash2, Plus, X, MapPin } from 'lucide-react'
 import ContainerMap from '../../components/Map/ContainerMap'
 
 const getFillStateColor = (etat) => {
+  // Convertir en majuscules pour la rétrocompatibilité
+  const etatUpper = etat?.toUpperCase()
   const colors = {
     VIDE: 'bg-green-100 text-green-800',
-    FAIBLE: 'bg-yellow-100 text-yellow-800',
+    SATUREE: 'bg-red-100 text-red-800',
     MOYEN: 'bg-orange-100 text-orange-800',
-    PLEIN: 'bg-red-100 text-red-800',
   }
-  return colors[etat] || colors.VIDE
+  return colors[etatUpper] || colors.VIDE
 }
 
 const getFillStateLabel = (etat) => {
+  // Convertir en majuscules pour la rétrocompatibilité
+  const etatUpper = etat?.toUpperCase()
   const labels = {
     VIDE: 'Vide',
-    FAIBLE: 'Faible',
+    SATUREE: 'Saturé',
     MOYEN: 'Moyen',
-    PLEIN: 'Plein',
   }
-  return labels[etat] || 'Inconnu'
+  return labels[etatUpper] || 'Inconnu'
 }
 
 const AdminContainers = () => {
   const [showModal, setShowModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState(null)
+  const [selectedContainer, setSelectedContainer] = useState(null)
   const queryClient = useQueryClient()
+  const [mapView, setMapView] = useState(true) // Pour basculer entre la vue tableau et la vue carte
 
   const { data: containers = [], isLoading } = useQuery(
     'containers',
@@ -52,6 +56,16 @@ const AdminContainers = () => {
     setSelectedPosition(position)
   }
 
+  const handleContainerClick = useCallback((container) => {
+    setSelectedContainer(container)
+    if (container?.localisation?.latitude && container?.localisation?.longitude) {
+      setSelectedPosition({
+        lat: parseFloat(container.localisation.latitude),
+        lng: parseFloat(container.localisation.longitude)
+      })
+    }
+  }, [])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -69,57 +83,101 @@ const AdminContainers = () => {
           </h1>
           <p className="text-gray-600">Gérer tous les conteneurs de collecte</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Ajouter un conteneur
-        </button>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setMapView(!mapView)}
+            className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            <MapPin className="mr-2 h-5 w-5" />
+            {mapView ? 'Voir le tableau' : 'Voir la carte'}
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Ajouter un conteneur
+          </button>
+        </div>
       </div>
 
       <div className="card">
         {containers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {containers.map((container) => (
-              <div
-                key={container.id}
-                className="p-4 border border-gray-200 rounded-lg hover:border-red-500 hover:shadow-card transition-all"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-light-gray rounded-lg flex items-center justify-center">
-                      <Trash2 className="w-6 h-6 text-anthracite" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-anthracite">
-                        Conteneur #{container.id?.substring(0, 8) || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {container.localisation?.adresse || 'Adresse non disponible'}
-                      </p>
-                    </div>
+          !showModal && mapView ? (
+            <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: '600px' }}>
+              <ContainerMap 
+                containers={containers}
+                onMapClick={setSelectedPosition}
+                selectedPosition={selectedPosition}
+                selectedContainer={selectedContainer}
+                onContainerClick={handleContainerClick}
+              />
+              {selectedContainer && (
+                <div className="bg-white p-4 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">Détails du conteneur</h3>
+                  <div className="mt-2">
+                    <p><span className="font-medium">ID:</span> {selectedContainer.id}</p>
+                    <p><span className="font-medium">Adresse:</span> {selectedContainer.localisation?.adresse || 'Non spécifiée'}</p>
+                    <p>
+                      <span className="font-medium">État:</span>{' '}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getFillStateColor(selectedContainer.etatRemplissage)}`}>
+                        {getFillStateLabel(selectedContainer.etatRemplissage)}
+                      </span>
+                    </p>
+                    <p><span className="font-medium">Dernière mise à jour:</span> {new Date(selectedContainer.updatedAt).toLocaleString()}</p>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">État de remplissage</span>
-                    <span className={`badge ${getFillStateColor(container.etatRemplissage)}`}>
-                      {getFillStateLabel(container.etatRemplissage)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Statut couleur</span>
-                    <span className="badge badge-info">
-                      {container.couleurStatut || 'N/A'}
-                    </span>
-                  </div>
-                </div>
+              )}
+            </div>
+          ) : !showModal ? (
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Localisation</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">État</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {containers.map((container) => (
+                      <tr 
+                        key={container.id} 
+                        className={`hover:bg-gray-50 cursor-pointer ${selectedContainer?.id === container.id ? 'bg-blue-50' : ''}`}
+                        onClick={() => handleContainerClick(container)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {container.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {container.localisation?.adresse || 'Non spécifiée'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getFillStateColor(container.etatRemplissage)}`}>
+                            {getFillStateLabel(container.etatRemplissage)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // deleteMutation.mutate(container.id);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            disabled={false}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : null
         ) : (
           <div className="text-center py-12">
             <Trash2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -131,13 +189,18 @@ const AdminContainers = () => {
       {/* Add Container Modal */}
       {showModal && (
         <AddContainerModal
+          containers={containers} // Passer les conteneurs existants
           selectedPosition={selectedPosition}
-          onMapClick={handleMapClick}
+          onMapClick={setSelectedPosition}
           onClose={() => {
             setShowModal(false)
             setSelectedPosition(null)
+            setSelectedContainer(null)
           }}
-          onCreate={createMutation.mutate}
+          onCreate={(data) => {
+            createMutation.mutate(data)
+            setMapView(true) // Basculer vers la vue carte après la création
+          }}
           isLoading={createMutation.isLoading}
         />
       )}
@@ -145,32 +208,49 @@ const AdminContainers = () => {
   )
 }
 
-const AddContainerModal = ({ selectedPosition, onMapClick, onClose, onCreate, isLoading }) => {
+const AddContainerModal = ({ containers, selectedPosition, onMapClick, onClose, onCreate, isLoading }) => {
   const [formData, setFormData] = useState({
-    etatRemplissage: 'VIDE',
+    etatRemplissage: 'vide',  // En minuscules pour correspondre à l'API
     couleurStatut: 'vert',
     adresse: '',
   })
+  const [modalSelectedPosition, setModalSelectedPosition] = useState(null)
+
+  // Utiliser une position locale pour le modal pour éviter les conflits
+  const handleModalMapClick = (position) => {
+    setModalSelectedPosition(position)
+    if (onMapClick) {
+      onMapClick(position)
+    }
+  }
+
+  // Réinitialiser la position du modal quand il s'ouvre
+  useEffect(() => {
+    setModalSelectedPosition(selectedPosition)
+  }, [selectedPosition])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     
-    if (!selectedPosition) {
+    const positionToUse = modalSelectedPosition || selectedPosition
+    if (!positionToUse) {
       toast.error('Veuillez sélectionner un emplacement sur la carte')
       return
     }
 
+    // S'assurer que l'état de remplissage est en minuscules
+    const etatRemplissage = formData.etatRemplissage.toLowerCase()
+    
     // Format localisation comme JSON string pour le backend
-    // Le backend stocke comme String, mais on envoie un JSON pour que le frontend puisse le parser
     const localisationData = {
-      latitude: selectedPosition.lat.toString(),
-      longitude: selectedPosition.lng.toString(),
-      adresse: formData.adresse || `Lat: ${selectedPosition.lat.toFixed(6)}, Lng: ${selectedPosition.lng.toFixed(6)}`,
+      latitude: positionToUse.lat.toString(),
+      longitude: positionToUse.lng.toString(),
+      adresse: formData.adresse || `Lat: ${positionToUse.lat.toFixed(6)}, Lng: ${positionToUse.lng.toFixed(6)}`,
     }
 
     const containerData = {
-      localisation: JSON.stringify(localisationData), // Envoyer comme JSON string
-      etatRemplissage: formData.etatRemplissage,
+      localisation: JSON.stringify(localisationData),
+      etatRemplissage: etatRemplissage, // Utiliser la valeur en minuscules
       couleurStatut: formData.couleurStatut,
       dechets: [],
       citoyens: [],
@@ -205,9 +285,9 @@ const AddContainerModal = ({ selectedPosition, onMapClick, onClose, onCreate, is
           {/* Map */}
           <div className="flex-1 min-h-[400px]">
             <ContainerMap
-              containers={[]}
-              onMapClick={onMapClick}
-              selectedPosition={selectedPosition}
+              containers={containers} // Afficher les conteneurs existants
+              onMapClick={handleModalMapClick}
+              selectedPosition={modalSelectedPosition || selectedPosition}
               selectedEtat={formData.etatRemplissage}
             />
           </div>
@@ -215,19 +295,19 @@ const AddContainerModal = ({ selectedPosition, onMapClick, onClose, onCreate, is
           {/* Form */}
           <div className="w-96 border-l border-gray-200 overflow-y-auto">
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {selectedPosition && (
+              {(modalSelectedPosition || selectedPosition) && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
                   <div className="flex items-center gap-2 text-green-800">
                     <MapPin className="w-4 h-4" />
                     <span className="text-sm font-medium">Position sélectionnée</span>
                   </div>
                   <p className="text-xs text-green-700 mt-1">
-                    Lat: {selectedPosition.lat.toFixed(6)}, Lng: {selectedPosition.lng.toFixed(6)}
+                    Lat: {(modalSelectedPosition || selectedPosition).lat.toFixed(6)}, Lng: {(modalSelectedPosition || selectedPosition).lng.toFixed(6)}
                   </p>
                 </div>
               )}
 
-              {!selectedPosition && (
+              {!modalSelectedPosition && !selectedPosition && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-yellow-800">
                     ⚠️ Veuillez cliquer sur la carte pour sélectionner un emplacement
@@ -258,20 +338,18 @@ const AddContainerModal = ({ selectedPosition, onMapClick, onClose, onCreate, is
                   className="input-field"
                   required
                 >
-                  <option value="VIDE">Vide (Vert)</option>
-                  <option value="FAIBLE">Faible (Jaune)</option>
-                  <option value="MOYEN">Moyen (Orange)</option>
-                  <option value="PLEIN">Plein (Rouge)</option>
+                  <option value="vide">Vide (Vert)</option>
+                  <option value="moyen">Moyen (Orange)</option>
+                  <option value="saturee">Saturé (Rouge)</option>
                 </select>
                 <div className="mt-2 flex items-center gap-2">
                   <div
                     className="w-4 h-4 rounded-full"
                     style={{
                       backgroundColor:
-                        formData.etatRemplissage === 'VIDE' ? '#4CAF50' :
-                        formData.etatRemplissage === 'FAIBLE' ? '#FFEB3B' :
-                        formData.etatRemplissage === 'MOYEN' ? '#FF9800' :
-                        '#F44336'
+                        formData.etatRemplissage === 'vide' ? '#4CAF50' :
+                        formData.etatRemplissage === 'moyen' ? '#FF9800' :
+                        '#F44336' // saturee
                     }}
                   />
                   <span className="text-xs text-gray-600">
@@ -300,7 +378,7 @@ const AddContainerModal = ({ selectedPosition, onMapClick, onClose, onCreate, is
                 <button
                   type="submit"
                   className="btn-primary flex-1"
-                  disabled={!selectedPosition || isLoading}
+                  disabled={!modalSelectedPosition && !selectedPosition || isLoading}
                 >
                   {isLoading ? 'Création...' : 'Créer le conteneur'}
                 </button>
