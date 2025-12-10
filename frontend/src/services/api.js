@@ -27,6 +27,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    // Gestion spéciale pour les erreurs de connexion
+    if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || !error.response) {
+      error.message = 'Le serveur backend n\'est pas accessible. Veuillez démarrer le backend Spring Boot sur le port 9090.'
+      error.isConnectionError = true
+      console.error('❌ Erreur de connexion au backend:', {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        message: 'Assurez-vous que le backend est démarré avec: cd projetJEE && mvnw spring-boot:run'
+      })
+    }
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       window.location.href = '/login'
@@ -91,6 +102,9 @@ export const tourAPI = {
   start: (id) => api.put(`/tournees/${id}/start`),
   complete: (id) => api.put(`/tournees/${id}/complete`),
   getOptimalRoute: (tourneeId) => api.get(`/tournees/${tourneeId}/route`),
+  planifyAutomatic: () => api.post('/tournees/planifier-automatique'),
+  validate: (id) => api.put(`/tournees/${id}/valider`),
+  release: (id) => api.put(`/tournees/${id}/liberer`),
 }
 
 // Container API
@@ -99,6 +113,7 @@ export const containerAPI = {
   getById: (id) => api.get(`/conteneurs/${id}`),
   create: (data) => api.post('/conteneurs', data),
   update: (id, data) => api.put(`/conteneurs/${id}`, data),
+  delete: (id) => api.delete(`/conteneurs/${id}`),
   markEmpty: (id) => api.put(`/conteneurs/${id}/empty`),
   getByZone: (zoneId) => api.get(`/conteneurs/zone/${zoneId}`),
 }

@@ -31,13 +31,17 @@ const containerColors = {
 };
 
 // Composant pour gérer les clics sur la carte
-const MapEvents = ({ onClick }) => {
+const MapEvents = ({ onClick, bounds }) => {
   const map = useMap();
 
   useEffect(() => {
     if (!onClick) return;
     
     const handleClick = (e) => {
+      if (bounds) {
+        const allowed = L.latLngBounds(bounds);
+        if (!allowed.contains(e.latlng)) return;
+      }
       onClick({
         lat: e.latlng.lat,
         lng: e.latlng.lng
@@ -48,7 +52,7 @@ const MapEvents = ({ onClick }) => {
     return () => {
       map.off('click', handleClick);
     };
-  }, [map, onClick]);
+  }, [map, onClick, bounds]);
 
   return null;
 };
@@ -59,9 +63,15 @@ const ContainerMap = ({
   onContainerClick,
   selectedPosition = null,
   selectedContainer = null,
-  selectedEtat = 'vide'
+  selectedEtat = 'vide',
+  bounds = null,
+  centerOverride = null
 }) => {
   const mapRef = useRef();
+  const SFAX_CENTER = [34.7406, 10.7603];
+  const SFAX_BOUNDS = [[34.62, 10.65], [34.86, 10.88]];
+  const BOUNDS = bounds || SFAX_BOUNDS;
+  const CENTER = centerOverride || SFAX_CENTER;
 
   const getContainerColor = (etatRemplissage) => {
     // Gérer les valeurs null/undefined et convertir en minuscules pour la correspondance
@@ -197,12 +207,17 @@ const ContainerMap = ({
     <div style={{ width: '100%', height: '100%' }}>
       <MapContainer
         ref={mapRef}
-        center={selectedPosition ? [selectedPosition.lat, selectedPosition.lng] : [36.8065, 10.1815]}
+        center={selectedPosition ? [selectedPosition.lat, selectedPosition.lng] : CENTER}
         zoom={selectedPosition ? 15 : 13}
         style={{ width: '100%', height: '100%' }}
         scrollWheelZoom={true}
+        maxBounds={BOUNDS}
+        maxBoundsViscosity={1.0}
         whenCreated={(map) => {
           mapRef.current = map;
+          map.setMaxBounds(BOUNDS);
+          const minZ = map.getBoundsZoom(L.latLngBounds(BOUNDS), true);
+          map.setMinZoom(minZ);
         }}
         className="rounded-lg"
       >
@@ -212,7 +227,7 @@ const ContainerMap = ({
         />
         
         {/* Gestionnaire d'événements de clic */}
-        <MapEvents onClick={handleMapClickInternal} />
+        <MapEvents onClick={handleMapClickInternal} bounds={BOUNDS} />
         
         {/* Marqueurs des conteneurs existants - Icônes de poubelle colorées */}
         {containerMarkers.map((container) => {

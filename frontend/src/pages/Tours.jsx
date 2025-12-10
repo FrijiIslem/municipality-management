@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query'
 import { tourAPI } from '../services/api'
 import { Link } from 'react-router-dom'
-import { Clock, CheckCircle, XCircle, Route } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, Route, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -47,7 +47,7 @@ const Tours = () => {
                   <th className="text-left py-3 px-4 font-semibold text-anthracite">Conteneurs</th>
                   <th className="text-left py-3 px-4 font-semibold text-anthracite">Chauffeur</th>
                   <th className="text-left py-3 px-4 font-semibold text-anthracite">Statut</th>
-                  <th className="text-left py-3 px-4 font-semibold text-anthracite">Actions</th>
+                  <th className="text-left py-3 px-4 font-semibold text-anthracite w-16"></th>
                 </tr>
               </thead>
               <tbody>
@@ -86,9 +86,10 @@ const Tours = () => {
                       <td className="py-4 px-4">
                         <Link
                           to={`/tours/${tour.id}`}
-                          className="text-eco-green hover:underline font-medium text-sm"
+                          aria-label="Voir détails"
+                          className="text-eco-green hover:text-emerald-600 inline-flex"
                         >
-                          Voir détails
+                          <Eye className="w-5 h-5" />
                         </Link>
                       </td>
                     </tr>

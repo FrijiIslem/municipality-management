@@ -1,7 +1,9 @@
 import { useQuery } from 'react-query'
-import { tourAPI, containerAPI, incidentAPI, agentAPI, citoyenAPI, vehicleAPI } from '../../services/api'
-import { Route, Trash2, AlertTriangle, Users, Truck, UserCheck } from 'lucide-react'
+import { tourAPI, containerAPI, incidentAPI, agentAPI, citoyenAPI, vehicleAPI, notificationAPI } from '../../services/api'
+import { Route, Trash2, AlertTriangle, Users, Truck, UserCheck, Bell } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 const AdminDashboard = () => {
   const { data: tours = [] } = useQuery('tours', tourAPI.getAll)
@@ -10,10 +12,18 @@ const AdminDashboard = () => {
   const { data: agents = [] } = useQuery('agents', agentAPI.getAll)
   const { data: citoyens = [] } = useQuery('citoyens', citoyenAPI.getAll)
   const { data: vehicles = [] } = useQuery('vehicles', vehicleAPI.getAll)
+  const { data: notifications = [] } = useQuery('notifications', notificationAPI.getAll)
 
-  const activeTours = tours.filter(t => t.etat === 'EN_COURS')
+  const activeTours = tours.filter(t => t.etat === 'EN_COURS' || t.etat === 'ENCOURS')
+  const pendingTours = tours.filter(t => t.etat === 'PLANIFIEE')
   const pendingIncidents = incidents.filter(i => i.statut === 'EN_ATTENTE')
-  const fullContainers = containers.filter(c => c.etatRemplissage === 'PLEIN')
+  const fullContainers = containers.filter(c => c.etatRemplissage === 'saturee' || c.etatRemplissage === 'SATUREE')
+  
+  // Notifications récentes pour l'admin (planification automatique)
+  const recentPlanningNotifications = notifications
+    .filter(n => n.destination === 'admin' && (n.type === 'REMINDER' || n.message?.includes('planifiée')))
+    .slice(0, 3)
+    .sort((a, b) => new Date(b.dateEnvoi || b.dateCreation || 0) - new Date(a.dateEnvoi || a.dateCreation || 0))
 
   const stats = [
     {
@@ -35,6 +45,13 @@ const AdminDashboard = () => {
       value: activeTours.length,
       icon: Route,
       color: 'purple-500',
+      link: '/admin/tours',
+    },
+    {
+      label: 'Tournées à valider',
+      value: pendingTours.length,
+      icon: Bell,
+      color: 'yellow-500',
       link: '/admin/tours',
     },
     {
@@ -92,6 +109,53 @@ const AdminDashboard = () => {
           )
         })}
       </div>
+
+      {/* Recent Planning Notifications */}
+      {recentPlanningNotifications.length > 0 && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-heading font-semibold text-anthracite">
+              Notifications de planification
+            </h2>
+            <Link
+              to="/admin/notifications"
+              className="text-red-500 hover:underline text-sm font-medium"
+            >
+              Voir tout
+            </Link>
+          </div>
+          
+          <div className="space-y-3">
+            {recentPlanningNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg hover:border-yellow-300 transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-anthracite mb-1">
+                      Planification automatique
+                    </p>
+                    <p className="text-sm text-gray-700 whitespace-pre-line">
+                      {notification.message || notification.contenu}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {notification.dateEnvoi || notification.dateCreation
+                        ? format(
+                            new Date(notification.dateEnvoi || notification.dateCreation),
+                            'dd MMM yyyy à HH:mm',
+                            { locale: fr }
+                          )
+                        : 'Date inconnue'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Incidents */}
       <div className="card">

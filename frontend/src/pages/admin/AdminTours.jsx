@@ -1,9 +1,10 @@
-import { useQuery } from 'react-query'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { tourAPI } from '../../services/api'
 import { Link } from 'react-router-dom'
-import { Clock, CheckCircle, XCircle, Route, Plus } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, Route, Plus, Eye, Zap, Loader } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { toast } from 'react-hot-toast'
 
 const statusConfig = {
   PLANIFIEE: { label: 'Planifiée', icon: Clock, color: 'badge-info' },
@@ -14,7 +15,48 @@ const statusConfig = {
 }
 
 const AdminTours = () => {
+  const queryClient = useQueryClient()
   const { data: tours = [], isLoading } = useQuery('tours', tourAPI.getAll)
+
+  const planifyMutation = useMutation(
+    () => tourAPI.planifyAutomatic(),
+    {
+      onSuccess: (data) => {
+        toast.success('Planification automatique réussie ! Une nouvelle tournée a été créée.')
+        queryClient.invalidateQueries('tours')
+        queryClient.invalidateQueries('notifications')
+      },
+      onError: (error) => {
+        if (error?.isConnectionError) {
+          toast.error(
+            'Le backend n\'est pas accessible. Veuillez démarrer le serveur Spring Boot.\n\nCommande: cd projetJEE && mvnw spring-boot:run',
+            { duration: 8000 }
+          )
+        } else {
+          toast.error(error?.message || 'Erreur lors de la planification automatique')
+        }
+      }
+    }
+  )
+
+  const validateMutation = useMutation(
+    (id) => tourAPI.validate(id),
+    {
+      onSuccess: () => {
+        toast.success('Tournée validée avec succès')
+        queryClient.invalidateQueries('tours')
+      },
+      onError: (error) => {
+        toast.error(error?.message || 'Erreur lors de la validation')
+      }
+    }
+  )
+
+  const handlePlanifyAutomatic = () => {
+    if (window.confirm('Voulez-vous déclencher la planification automatique maintenant ?\n\nCela va :\n- Sélectionner un véhicule disponible\n- Sélectionner 2 agents collecteurs\n- Sélectionner 1 agent chauffeur\n- Calculer le chemin optimal\n- Créer une tournée')) {
+      planifyMutation.mutate()
+    }
+  }
 
   if (isLoading) {
     return (
@@ -33,10 +75,29 @@ const AdminTours = () => {
           </h1>
           <p className="text-gray-600">Gérer toutes les tournées de collecte</p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Créer une tournée
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handlePlanifyAutomatic}
+            disabled={planifyMutation.isLoading}
+            className="btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          >
+            {planifyMutation.isLoading ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Planification...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4" />
+                Planification automatique
+              </>
+            )}
+          </button>
+          <button className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Créer une tournée
+          </button>
+        </div>
       </div>
 
       <div className="card">
@@ -58,6 +119,7 @@ const AdminTours = () => {
                 {tours.map((tour) => {
                   const status = statusConfig[tour.etat] || statusConfig.PLANIFIEE
                   const StatusIcon = status.icon
+                  const isPlanified = tour.etat === 'PLANIFIEE'
                   
                   return (
                     <tr
@@ -65,7 +127,7 @@ const AdminTours = () => {
                       className="border-b border-gray-100 hover:bg-light-gray transition-colors"
                     >
                       <td className="py-4 px-4 font-medium text-anthracite">
-                        #{tour.id}
+                        #{tour.id?.substring(0, 8) || 'N/A'}
                       </td>
                       <td className="py-4 px-4 text-gray-600">
                         {tour.dateDebut
@@ -73,13 +135,13 @@ const AdminTours = () => {
                           : '-'}
                       </td>
                       <td className="py-4 px-4 text-gray-600">
-                        Zone {tour.zone || 'N/A'}
+                        {tour.vehicule?.matricule ? `Véhicule ${tour.vehicule.matricule}` : 'N/A'}
                       </td>
                       <td className="py-4 px-4 text-gray-600">
-                        {tour.conteneurs?.length || 0}
+                        {tour.conteneurs?.length || 0} conteneurs
                       </td>
                       <td className="py-4 px-4 text-gray-600">
-                        {tour.agentChauffeur?.nom || '-'}
+                        {tour.agentChauffeur?.nom || tour.agentChauffeur?.prenom || '-'}
                       </td>
                       <td className="py-4 px-4">
                         <span className={`badge ${status.color} flex items-center gap-1 w-fit`}>
@@ -88,12 +150,25 @@ const AdminTours = () => {
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        <Link
-                          to={`/admin/tours/${tour.id}`}
-                          className="text-red-500 hover:underline font-medium text-sm"
-                        >
-                          Voir détails
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {isPlanified && (
+                            <button
+                              onClick={() => validateMutation.mutate(tour.id)}
+                              disabled={validateMutation.isLoading}
+                              className="text-green-600 hover:text-green-700 text-sm font-medium"
+                              title="Valider la tournée"
+                            >
+                              Valider
+                            </button>
+                          )}
+                          <Link
+                            to={`/admin/tours/${tour.id}`}
+                            aria-label="Voir détails"
+                            className="text-red-500 hover:text-red-600 inline-flex"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   )

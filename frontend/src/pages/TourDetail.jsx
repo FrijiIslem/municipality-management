@@ -8,6 +8,8 @@ import ContainerList from '../components/Tour/ContainerList'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
+const TUNIS_BOUNDS = [[36.6925111, 10.0037899], [36.9430196, 10.3548094]]
+
 const TourDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -175,8 +177,10 @@ const TourDetail = () => {
               <TourMap
                 containers={tour.conteneurs || []}
                 route={route}
+                itineraire={tour.itineraire} // Passer l'itinéraire JSON optimisé
                 center={mapCenter}
                 zoom={13}
+                bounds={TUNIS_BOUNDS}
               />
             </div>
           </div>

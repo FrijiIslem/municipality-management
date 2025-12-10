@@ -29,33 +29,93 @@ const containerColors = {
 const TourMap = ({ 
   containers = [], 
   route = [], 
-  center = [36.8065, 10.1815], // [lat, lng] format pour Leaflet
-  zoom = 13
+  itineraire = null, // JSON string de l'itinéraire optimisé
+  center = [34.7406, 10.7603], // [lat, lng] format pour Leaflet
+  zoom = 13,
+  bounds = null,
+  centerOverride = null
 }) => {
-  // Convertir les conteneurs au format attendu par Leaflet
-  const containerMarkers = containers
-    .filter(container => {
-      const lat = parseFloat(container?.localisation?.latitude);
-      const lng = parseFloat(container?.localisation?.longitude);
-      return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
-    })
-    .map(container => ({
-      ...container,
-      position: [
-        parseFloat(container.localisation.latitude),
-        parseFloat(container.localisation.longitude)
-      ]
-    }));
+  const SFAX_CENTER = [34.7406, 10.7603];
+  const SFAX_BOUNDS = [[34.62, 10.65], [34.86, 10.88]];
+  const BOUNDS = bounds || SFAX_BOUNDS;
+  const CENTER = centerOverride || center || SFAX_CENTER;
+  
+  // Parser l'itinéraire JSON si fourni
+  let parsedItineraire = [];
+  if (itineraire) {
+    try {
+      parsedItineraire = typeof itineraire === 'string' ? JSON.parse(itineraire) : itineraire;
+    } catch (e) {
+      console.warn('Erreur lors du parsing de l\'itinéraire:', e);
+    }
+  }
 
-  // Convertir l'itinéraire au format attendu par Leaflet
-  const routePath = route.length > 0 
-    ? route.map(point => ({
-        lat: parseFloat(point.lat || point.latitude || point[0]),
-        lng: parseFloat(point.lng || point.longitude || point[1])
-      }))
-      .filter(point => !isNaN(point.lat) && !isNaN(point.lng))
-      .map(point => [point.lat, point.lng])
-    : [];
+  // Convertir les conteneurs au format attendu par Leaflet
+  const parseContainerLocation = (container) => {
+    let lat, lng;
+    
+    // Si localisation est un objet
+    if (container?.localisation && typeof container.localisation === 'object') {
+      lat = parseFloat(container.localisation.latitude || container.localisation.lat);
+      lng = parseFloat(container.localisation.longitude || container.localisation.lng);
+    }
+    // Si localisation est une string JSON
+    else if (container?.localisation && typeof container.localisation === 'string') {
+      try {
+        const loc = JSON.parse(container.localisation);
+        lat = parseFloat(loc.latitude || loc.lat);
+        lng = parseFloat(loc.longitude || loc.lng);
+      } catch (e) {
+        return null;
+      }
+    }
+    
+    if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+      return null;
+    }
+    
+    return { lat, lng };
+  };
+
+  const containerMarkers = containers
+    .map(container => {
+      const pos = parseContainerLocation(container);
+      if (!pos) return null;
+      
+      return {
+        ...container,
+        position: [pos.lat, pos.lng]
+      };
+    })
+    .filter(Boolean);
+
+  // Construire le chemin optimisé depuis l'itinéraire ou les conteneurs
+  let routePath = [];
+  
+  if (parsedItineraire.length > 0) {
+    // Utiliser l'itinéraire optimisé depuis le JSON
+    routePath = parsedItineraire
+      .map(point => {
+        const lat = parseFloat(point.latitude || point.lat);
+        const lng = parseFloat(point.longitude || point.lng);
+        if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+          return null;
+        }
+        return [lat, lng];
+      })
+      .filter(Boolean);
+  } else if (route.length > 0) {
+    // Utiliser le route fourni
+    routePath = route.map(point => ({
+      lat: parseFloat(point.lat || point.latitude || point[0]),
+      lng: parseFloat(point.lng || point.longitude || point[1])
+    }))
+    .filter(point => !isNaN(point.lat) && !isNaN(point.lng))
+    .map(point => [point.lat, point.lng]);
+  } else if (containerMarkers.length > 0) {
+    // Utiliser l'ordre des conteneurs comme chemin
+    routePath = containerMarkers.map(c => c.position);
+  }
 
   // Fonction pour obtenir la couleur en fonction de l'état de remplissage
   const getContainerColor = (etatRemplissage) => {
@@ -65,10 +125,17 @@ const TourMap = ({
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <MapContainer
-        center={center}
+        center={CENTER}
         zoom={zoom}
         style={{ width: '100%', height: '100%' }}
         scrollWheelZoom={true}
+        maxBounds={BOUNDS}
+        maxBoundsViscosity={1.0}
+        whenCreated={(map) => {
+          map.setMaxBounds(BOUNDS);
+          const minZ = map.getBoundsZoom(L.latLngBounds(BOUNDS), true);
+          map.setMinZoom(minZ);
+        }}
         className="rounded-lg"
       >
         <TileLayer

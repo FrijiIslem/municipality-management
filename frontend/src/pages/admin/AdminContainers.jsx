@@ -5,6 +5,9 @@ import { toast } from 'react-hot-toast'
 import { Trash2, Plus, X, MapPin } from 'lucide-react'
 import ContainerMap from '../../components/Map/ContainerMap'
 
+const TUNIS_CENTER = [36.8002068, 10.1857757]
+const TUNIS_BOUNDS = [[36.6925111, 10.0037899], [36.9430196, 10.3548094]]
+
 const getFillStateColor = (etat) => {
   // Convertir en majuscules pour la rétrocompatibilité
   const etatUpper = etat?.toUpperCase()
@@ -49,6 +52,19 @@ const AdminContainers = () => {
         setSelectedPosition(null)
       },
       onError: () => toast.error('Erreur lors de la création du conteneur')
+    }
+  )
+
+  const deleteMutation = useMutation(
+    (id) => containerAPI.delete(id),
+    {
+      onSuccess: () => {
+        toast.success('Conteneur supprimé avec succès')
+        queryClient.invalidateQueries('containers')
+        setSelectedContainer(null)
+        setSelectedPosition(null)
+      },
+      onError: (err) => toast.error(err?.message || 'Erreur lors de la suppression du conteneur')
     }
   )
 
@@ -111,6 +127,8 @@ const AdminContainers = () => {
                 selectedPosition={selectedPosition}
                 selectedContainer={selectedContainer}
                 onContainerClick={handleContainerClick}
+                bounds={TUNIS_BOUNDS}
+                centerOverride={TUNIS_CENTER}
               />
               {selectedContainer && (
                 <div className="bg-white p-4 border-t border-gray-200">
@@ -162,11 +180,13 @@ const AdminContainers = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={(e) => {
-                              e.stopPropagation();
-                              // deleteMutation.mutate(container.id);
+                              e.stopPropagation()
+                              if (window.confirm('Supprimer ce conteneur ?')) {
+                                deleteMutation.mutate(container.id)
+                              }
                             }}
                             className="text-red-600 hover:text-red-900"
-                            disabled={false}
+                            disabled={deleteMutation.isLoading}
                           >
                             <Trash2 className="h-5 w-5" />
                           </button>
@@ -285,10 +305,12 @@ const AddContainerModal = ({ containers, selectedPosition, onMapClick, onClose, 
           {/* Map */}
           <div className="flex-1 min-h-[400px]">
             <ContainerMap
-              containers={containers} // Afficher les conteneurs existants
+              containers={containers}
               onMapClick={handleModalMapClick}
               selectedPosition={modalSelectedPosition || selectedPosition}
               selectedEtat={formData.etatRemplissage}
+              bounds={TUNIS_BOUNDS}
+              centerOverride={TUNIS_CENTER}
             />
           </div>
 

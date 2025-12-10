@@ -4,6 +4,7 @@ import com.projetJEE.projetJEE.dto.TourneeDto;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 import com.projetJEE.projetJEE.services.TourneeService;
+import com.projetJEE.projetJEE.services.AutomaticPlanningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,9 @@ public class TourneeController {
     @Autowired
     private TourneeService tourneeService;
 
+    @Autowired
+    private AutomaticPlanningService automaticPlanningService;
+
     @GetMapping
     public ResponseEntity<List<TourneeDto>> getAllTournees() {
         List<TourneeDto> tournees = tourneeService.getAllTournees();
@@ -40,6 +44,29 @@ public class TourneeController {
     public ResponseEntity<TourneeDto> createTournee(@RequestBody TourneeDto tourneeDto) {
         TourneeDto createdTournee = tourneeService.createTournee(tourneeDto);
         return ResponseEntity.ok(createdTournee);
+    }
+
+    /**
+     * Endpoint pour déclencher manuellement la planification automatique
+     * Utile pour les tests ou pour forcer une planification en dehors de l'horaire programmé
+     * IMPORTANT: Cet endpoint doit être placé AVANT les autres mappings pour éviter les conflits
+     */
+    @PostMapping("/planifier-automatique")
+    public ResponseEntity<TourneeDto> planifierAutomatique() {
+        logger.info("Déclenchement manuel de la planification automatique");
+        try {
+            TourneeDto tournee = automaticPlanningService.planifyDailyTournees();
+            if (tournee != null) {
+                logger.info("Planification automatique réussie, tournée créée: {}", tournee.getId());
+                return ResponseEntity.ok(tournee);
+            } else {
+                logger.warn("Planification automatique n'a pas pu créer de tournée");
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (Exception e) {
+            logger.error("Erreur lors de la planification automatique", e);
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping("/planifier")
