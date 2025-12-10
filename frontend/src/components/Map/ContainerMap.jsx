@@ -1,172 +1,339 @@
-import { useState, useMemo, useCallback } from 'react'
-import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api'
-import { MapPin } from 'lucide-react'
+import { useCallback, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const libraries = ['places', 'geometry']
+// Fix for default marker icons in React
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Configuration de l'icône par défaut
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const containerColors = {
-  VIDE: '#4CAF50',      // Green - Empty
-  FAIBLE: '#FFEB3B',    // Yellow - Low
-  MOYEN: '#FF9800',     // Orange - Medium
-  PLEIN: '#F44336',     // Red - Full
-}
+  // Palette plus vive et moderne (proche Tailwind)
+  vide: '#01d04dff',      // Green 500
+  saturee: '#ed0909ff',   // Red 500
+  moyen: '#fb9f00ff',     // Amber 500
+  // Support pour les valeurs en majuscules (au cas où)
+  VIDE: '#05f55dff',
+  SATUREE: '#f00808ff',
+  MOYEN: '#F59E0B',
+};
 
-const ContainerMap = ({ 
+// Composant pour gérer les clics sur la carte
+const MapEvents = ({ onClick }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!onClick) return;
+    
+    const handleClick = (e) => {
+      onClick({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      });
+    };
+
+    map.on('click', handleClick);
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [map, onClick]);
+
+  return null;
+};
+
+const ContainerMap = ({
   containers = [],
   onMapClick,
+  onContainerClick,
   selectedPosition = null,
-  selectedEtat = 'VIDE'
+  selectedContainer = null,
+  selectedEtat = 'vide'
 }) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
-  
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: apiKey,
-    libraries,
-  })
-
-  const mapOptions = useMemo(
-    () => ({
-      disableDefaultUI: false,
-      clickableIcons: true,
-      scrollwheel: true,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }],
-        },
-      ],
-    }),
-    []
-  )
+  const mapRef = useRef();
 
   const getContainerColor = (etatRemplissage) => {
-    return containerColors[etatRemplissage] || containerColors.VIDE
-  }
-
-  const handleMapClick = useCallback((e) => {
-    if (onMapClick && e.latLng) {
-      const lat = e.latLng.lat()
-      const lng = e.latLng.lng()
-      onMapClick({ lat, lng })
+    // Gérer les valeurs null/undefined et convertir en minuscules pour la correspondance
+    if (!etatRemplissage) return containerColors.vide;
+    const etat = etatRemplissage.toString().toLowerCase();
+    return containerColors[etat] || containerColors.vide;
+  };
+  const clamp = (v) => Math.max(0, Math.min(255, v));
+  const normalizeHex = (c) => {
+    let s = c || '';
+    if (s.startsWith('#')) s = s.slice(1);
+    if (s.length === 3) s = s.split('').map(ch => ch + ch).join('');
+    return s;
+  };
+  const lightenDarkenColor = (col, amt) => {
+    try {
+      const c = normalizeHex(col);
+      const r = clamp(parseInt(c.slice(0, 2), 16) + amt);
+      const g = clamp(parseInt(c.slice(2, 4), 16) + amt);
+      const b = clamp(parseInt(c.slice(4, 6), 16) + amt);
+      const toHex = (n) => n.toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    } catch {
+      return col;
     }
-  }, [onMapClick])
+  };
+  const getTrashIconSVG = (color, size = 36) => {
+    const id = `${(color || '').replace('#','')}-${size}`;
+    const light = lightenDarkenColor(color, 80);
+    const dark = lightenDarkenColor(color, -25);
+    return `
+      <svg width="${size}" height="${size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad-${id}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${light}"/>
+            <stop offset="100%" stop-color="${dark}"/>
+          </linearGradient>
+          <radialGradient id="gloss-${id}" cx="30%" cy="25%" r="60%">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="ds-${id}" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2.5" stdDeviation="2" flood-color="#000" flood-opacity="0.35"/>
+          </filter>
+        </defs>
+        <g filter="url(#ds-${id})">
+          <circle cx="32" cy="32" r="28" fill="url(#grad-${id})" />
+        </g>
+        <circle cx="32" cy="32" r="28" fill="url(#gloss-${id})" />
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#FFFFFF" stroke-width="3" />
+        <g fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="25" y="26" width="14" height="16" rx="3" fill="rgba(255,255,255,0.06)" />
+          <path d="M22 26h20"/>
+          <path d="M28 22h8"/>
+          <path d="M30 30v10"/>
+          <path d="M34 30v10"/>
+        </g>
+      </svg>
+    `;
+  };
+  // Convertir les conteneurs au format attendu par Leaflet (supporte localisation string ou objet)
+  const parseLoc = (loc) => {
+    if (!loc) return null;
+    let value = loc;
+    if (typeof value === 'string') {
+      try { value = JSON.parse(value); } catch { return null; }
+    }
+    const latRaw = value.latitude ?? value.lat;
+    const lngRaw = value.longitude ?? value.lng;
+    const lat = parseFloat(latRaw);
+    const lng = parseFloat(lngRaw);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    return { lat, lng, adresse: value.adresse };
+  };
 
-  // Si pas de clé API, afficher un message informatif
-  if (!apiKey) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-anthracite font-semibold mb-2">Clé API Google Maps requise</p>
-          <p className="text-sm text-gray-600 mb-4">
-            Veuillez configurer VITE_GOOGLE_MAPS_API_KEY dans le fichier .env
-          </p>
-          <a
-            href="https://console.cloud.google.com/google/maps-apis"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-eco-green hover:underline text-sm"
-          >
-            Obtenir une clé API →
-          </a>
-        </div>
-      </div>
-    )
-  }
+  const containerMarkers = containers
+    .map((container) => {
+      const loc = parseLoc(container?.localisation);
+      if (!loc) {
+        console.warn(`Conteneur ${container?.id} ignoré: localisation invalide`, container?.localisation);
+        return null;
+      }
+      return {
+        ...container,
+        localisation: { ...(typeof container.localisation === 'object' ? container.localisation : {}), ...loc },
+        position: [loc.lat, loc.lng]
+      };
+    })
+    .filter(Boolean);
 
-  if (loadError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-anthracite font-semibold mb-2">Erreur de chargement de la carte</p>
-          <p className="text-sm text-gray-600">
-            {loadError.message || 'Vérifiez votre clé API Google Maps'}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eco-green mx-auto mb-4"></div>
-          <p className="text-anthracite">Chargement de la carte...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const mapCenter = selectedPosition || 
-    (containers.length > 0 && containers[0]?.localisation
-      ? {
-          lat: parseFloat(containers[0].localisation.latitude),
-          lng: parseFloat(containers[0].localisation.longitude),
+  // Ajuster la vue de la carte pour afficher tous les conteneurs si aucun n'est sélectionné
+  useEffect(() => {
+    if (!selectedPosition && containerMarkers.length > 0 && mapRef.current) {
+      // Attendre un peu pour que la carte soit complètement initialisée
+      const timer = setTimeout(() => {
+        if (mapRef.current && containerMarkers.length > 0) {
+          try {
+            const bounds = L.latLngBounds(containerMarkers.map(c => c.position));
+            if (bounds.isValid()) {
+              mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+            }
+          } catch (error) {
+            console.warn('Erreur lors de l\'ajustement de la vue de la carte:', error);
+          }
         }
-      : { lat: 36.8065, lng: 10.1815 }) // Default: Tunis
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [containerMarkers, selectedPosition]);
+
+  // Effet pour centrer la carte sur la position sélectionnée
+  useEffect(() => {
+    if (selectedPosition && mapRef.current) {
+      const map = mapRef.current;
+      map.flyTo(
+        [selectedPosition.lat, selectedPosition.lng], 
+        15, // Niveau de zoom
+        { duration: 1 }
+      );
+    }
+  }, [selectedPosition]);
+
+  const handleMapClickInternal = useCallback((position) => {
+    if (onMapClick) {
+      onMapClick({
+        lat: position.lat,
+        lng: position.lng
+      });
+    }
+  }, [onMapClick]);
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden shadow-card relative">
-      {onMapClick && (
-        <div className="absolute top-4 left-4 z-10 bg-white px-4 py-2 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-anthracite">
-            👆 Cliquez sur la carte pour placer un conteneur
-          </p>
-        </div>
-      )}
-      <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%' }}
-        center={mapCenter}
-        zoom={13}
-        options={mapOptions}
-        onClick={handleMapClick}
+    <div style={{ width: '100%', height: '100%' }}>
+      <MapContainer
+        ref={mapRef}
+        center={selectedPosition ? [selectedPosition.lat, selectedPosition.lng] : [36.8065, 10.1815]}
+        zoom={selectedPosition ? 15 : 13}
+        style={{ width: '100%', height: '100%' }}
+        scrollWheelZoom={true}
+        whenCreated={(map) => {
+          mapRef.current = map;
+        }}
+        className="rounded-lg"
       >
-        {/* Existing container markers */}
-        {containers?.filter(container => {
-          const lat = parseFloat(container?.localisation?.latitude);
-          const lng = parseFloat(container?.localisation?.longitude);
-          return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
-        }).map((container) => {
-          const lat = parseFloat(container.localisation.latitude);
-          const lng = parseFloat(container.localisation.longitude);
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        
+        {/* Gestionnaire d'événements de clic */}
+        <MapEvents onClick={handleMapClickInternal} />
+        
+        {/* Marqueurs des conteneurs existants - Icônes de poubelle colorées */}
+        {containerMarkers.map((container) => {
+          const isSelected = container.id === selectedContainer?.id;
+          const color = getContainerColor(container.etatRemplissage);
+          const iconSize = isSelected ? 40 : 32;
           
           return (
-            <Marker
+            <Marker 
               key={container.id}
-              position={{ lat, lng }}
-              icon={{
-                path: window.google?.maps?.SymbolPath?.CIRCLE,
-                scale: 10,
-                fillColor: getContainerColor(container.etatRemplissage || 'VIDE'),
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2,
+              position={container.position}
+              eventHandlers={{
+                click: () => onContainerClick && onContainerClick(container),
+                mouseover: (e) => {
+                  const marker = e.target;
+                  marker.setIcon(L.divIcon({
+                    className: 'custom-marker-hover',
+                    html: `
+                      <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+                        transform: translate(-50%, -50%) scale(1.15);
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                      ">
+                        ${getTrashIconSVG(color, 36)}
+                      </div>
+                    `,
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                  }));
+                },
+                mouseout: (e) => {
+                  const marker = e.target;
+                  marker.setIcon(L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                      <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        filter: drop-shadow(0 ${isSelected ? '4px 8px' : '2px 4px'} rgba(0,0,0,${isSelected ? '0.4' : '0.3'}));
+                        transform: translate(-50%, -50%);
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                      ">
+                        ${getTrashIconSVG(color, iconSize)}
+                      </div>
+                    `,
+                    iconSize: [iconSize, iconSize],
+                    iconAnchor: [iconSize / 2, iconSize / 2]
+                  }));
+                }
               }}
-              title={`Conteneur ${container.id} - ${container.etatRemplissage}`}
-            />
+              icon={L.divIcon({
+                className: 'custom-marker',
+                html: `
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    filter: drop-shadow(0 ${isSelected ? '4px 8px' : '2px 4px'} rgba(0,0,0,${isSelected ? '0.4' : '0.3'}));
+                    transform: translate(-50%, -50%);
+                    transition: all 0.2s ease;
+                    cursor: pointer;
+                  ">
+                    ${getTrashIconSVG(color, iconSize)}
+                  </div>
+                `,
+                iconSize: [iconSize, iconSize],
+                iconAnchor: [iconSize / 2, iconSize / 2]
+              })}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <div className="font-semibold mb-1">Conteneur {container.id}</div>
+                  <div className="mb-1">
+                    <span className="font-medium">État: </span>
+                    <span className="capitalize">{container.etatRemplissage || 'Non spécifié'}</span>
+                  </div>
+                  {container.localisation?.adresse && (
+                    <div className="text-gray-600 text-xs mt-1">{container.localisation.adresse}</div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
           );
         })}
 
-        {/* Selected position marker (for new container) */}
+        {/* Marqueur de la position sélectionnée */}
         {selectedPosition && (
-          <Marker
-            position={selectedPosition}
-            icon={{
-              path: window.google?.maps?.SymbolPath?.CIRCLE,
-              scale: 12,
-              fillColor: getContainerColor(selectedEtat),
-              fillOpacity: 0.9,
-              strokeColor: '#fff',
-              strokeWeight: 3,
-            }}
-            title="Nouveau conteneur"
-            animation={window.google?.maps?.Animation?.DROP}
-          />
+          <Marker 
+            position={[selectedPosition.lat, selectedPosition.lng]}
+            icon={L.divIcon({
+              className: 'selected-marker',
+              html: `
+                <div style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+                  transform: translate(-50%, -50%);
+                ">
+                  ${getTrashIconSVG(getContainerColor(selectedEtat || 'vide'), 36)}
+                </div>
+              `,
+              iconSize: [36, 36],
+              iconAnchor: [18, 18]
+            })}
+          >
+            <Popup>
+              <div className="text-sm">
+                <div className="font-semibold">Nouvelle position</div>
+                <div>État: {selectedEtat}</div>
+              </div>
+            </Popup>
+          </Marker>
         )}
-      </GoogleMap>
+      </MapContainer>
     </div>
   )
 }
