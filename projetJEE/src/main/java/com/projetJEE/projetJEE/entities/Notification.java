@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.projetJEE.projetJEE.entities.enums.TypeNotification;
 import java.time.LocalDateTime;
 
-@Document(collection = "Notification")
+@Document(collection = "notifications")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

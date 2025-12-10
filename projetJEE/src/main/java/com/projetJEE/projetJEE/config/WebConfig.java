@@ -23,7 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     // Additional CORS filter as a backup
     @Bean
-    public CorsFilter corsFilter() {
+    CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         

@@ -2,7 +2,6 @@ package com.projetJEE.projetJEE.mapper;
 
 import com.projetJEE.projetJEE.dto.TourneeDto;
 import com.projetJEE.projetJEE.entities.Tournee;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +13,6 @@ public class TourneeMapper {
     private final ConteneurMapper conteneurMapper;
     private final VehiculeMapper vehiculeMapper;
 
-    @Autowired
     public TourneeMapper(ConteneurMapper conteneurMapper, VehiculeMapper vehiculeMapper) {
         this.conteneurMapper = conteneurMapper;
         this.vehiculeMapper = vehiculeMapper;

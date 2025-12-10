@@ -1,6 +1,9 @@
 package com.projetJEE.projetJEE.entities;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import com.projetJEE.projetJEE.entities.enums.TypeDechets;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

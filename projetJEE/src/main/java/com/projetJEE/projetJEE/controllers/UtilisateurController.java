@@ -92,7 +92,7 @@ public class UtilisateurController {
     
     // for islem
     @GetMapping("/getagenttache/{tache}")
-    public List<Agent> getAgentsDisponibles(@PathVariable("tache") String tache) {
+    public List<Agent> getAgentsDisponibles(@PathVariable String tache) {
         Agent.TypeTache typeTache = Agent.TypeTache.valueOf(tache.toUpperCase());
         return utilisateurService.getAgentsDisponiblesParTache(typeTache);
     }
