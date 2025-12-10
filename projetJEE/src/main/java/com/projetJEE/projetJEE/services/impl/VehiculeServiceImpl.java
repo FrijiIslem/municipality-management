@@ -20,9 +20,28 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public VehiculeDTO createVehicule(VehiculeDTO vehiculeDTO) {
+        System.out.println("=== DEBUG VehiculeServiceImpl.createVehicule ===");
+        System.out.println("DTO reçu: " + vehiculeDTO);
+        
+        // Validation
+        if (vehiculeDTO.getMatricule() == null) {
+            throw new IllegalArgumentException("Le matricule est obligatoire");
+        }
+        if (vehiculeDTO.getCapaciteMax() <= 0) {
+            throw new IllegalArgumentException("La capacité maximale doit être supérieure à 0");
+        }
+        
         Vehicule vehicule = vehiculeMapper.toEntity(vehiculeDTO);
+        System.out.println("Entité créée: " + vehicule);
+        System.out.println("ID avant save: " + vehicule.getId());
+        
         Vehicule saved = vehiculeRepository.save(vehicule);
-        return vehiculeMapper.toDTO(saved);
+        System.out.println("Entité sauvegardée: " + saved);
+        System.out.println("ID après save: " + saved.getId());
+        
+        VehiculeDTO result = vehiculeMapper.toDTO(saved);
+        System.out.println("DTO retourné: " + result);
+        return result;
     }
 
     @Override

@@ -77,4 +77,11 @@ public class ConteneurController {
 
         return ResponseEntity.ok(conteneurService.ajouterCitoyen(id, dto));
     }
+    
+ // Supprimer un conteneur
+    @Operation(summary = "Supprimer un conteneur")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable String id) {
+        conteneurService.deleteConteneur(id);
+    }
 }

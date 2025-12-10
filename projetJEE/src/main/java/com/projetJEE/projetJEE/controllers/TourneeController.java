@@ -3,7 +3,9 @@ package com.projetJEE.projetJEE.controllers;
 import com.projetJEE.projetJEE.dto.TourneeDto;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
+import com.projetJEE.projetJEE.exceptions.PlanningException;
 import com.projetJEE.projetJEE.services.TourneeService;
+import com.projetJEE.projetJEE.services.AutomaticPlanningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tournees")
@@ -22,6 +25,9 @@ public class TourneeController {
 
     @Autowired
     private TourneeService tourneeService;
+
+    @Autowired
+    private AutomaticPlanningService automaticPlanningService;
 
     @GetMapping
     public ResponseEntity<List<TourneeDto>> getAllTournees() {
@@ -40,6 +46,38 @@ public class TourneeController {
     public ResponseEntity<TourneeDto> createTournee(@RequestBody TourneeDto tourneeDto) {
         TourneeDto createdTournee = tourneeService.createTournee(tourneeDto);
         return ResponseEntity.ok(createdTournee);
+    }
+
+    /**
+     * Endpoint pour déclencher manuellement la planification automatique
+     * Utile pour les tests ou pour forcer une planification en dehors de l'horaire programmé
+     * IMPORTANT: Cet endpoint doit être placé AVANT les autres mappings pour éviter les conflits
+     */
+    @PostMapping("/planifier-automatique")
+    public ResponseEntity<?> planifierAutomatique() {
+        logger.info("Déclenchement manuel de la planification automatique");
+        try {
+            TourneeDto tournee = automaticPlanningService.planifyDailyTournees();
+            logger.info("Planification automatique réussie, tournée créée: {}", tournee.getId());
+            return ResponseEntity.ok(tournee);
+        } catch (PlanningException e) {
+            logger.warn("Erreur de planification: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                Map.of(
+                    "error", "Impossible de créer une tournée",
+                    "message", e.getMessage(),
+                    "reason", e.getReason()
+                )
+            );
+        } catch (Exception e) {
+            logger.error("Erreur lors de la planification automatique", e);
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "error", "Erreur serveur",
+                    "message", e.getMessage() != null ? e.getMessage() : "Une erreur est survenue lors de la planification"
+                )
+            );
+        }
     }
 
     @PostMapping("/planifier")

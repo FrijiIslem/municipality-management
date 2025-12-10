@@ -153,6 +153,7 @@ public class TourneeServiceImpl implements TourneeService {
                 collectors.add(agent);
                 tournee.setAgentRamasseurs(collectors);
                 agent.setDisponibilite(false);
+                System.out.println("=== DEBUG: Agent collecteur " + agent.getId() + " marqué comme indisponible ===");
             } else {
                 throw new IllegalStateException("Maximum number of collectors (2) reached for tournee: " + tourneeId);
             }
@@ -160,7 +161,10 @@ public class TourneeServiceImpl implements TourneeService {
             throw new IllegalArgumentException("Agent with id " + agent.getId() + " has an invalid role: " + agent.getTache());
         }
 
-        utilisateurRepository.save(agent);
+        // Sauvegarder l'agent avec sa nouvelle disponibilité
+        Agent savedAgent = utilisateurRepository.save(agent);
+        System.out.println("=== DEBUG: Agent " + savedAgent.getId() + " sauvegardé avec disponibilite=" + savedAgent.getDisponibilite() + " ===");
+        
         Tournee updatedTournee = tourneeRepository.save(tournee);
         return tourneeMapper.toDTO(updatedTournee);
     }

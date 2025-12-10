@@ -62,10 +62,10 @@ const AdminVehicles = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-anthracite">
-                        {vehicle.marque || 'Véhicule'} {vehicle.modele || ''}
+                        Véhicule #{vehicle.matricule || 'N/A'}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {vehicle.immatriculation || 'N/A'}
+                        Capacité: {vehicle.capaciteMax ? `${vehicle.capaciteMax} kg` : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -73,15 +73,15 @@ const AdminVehicles = () => {
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Type</span>
+                    <span className="text-sm text-gray-600">Matricule</span>
                     <span className="badge badge-info">
-                      {vehicle.type || 'N/A'}
+                      {vehicle.matricule || 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Disponibilité</span>
-                    <span className={`badge ${vehicle.disponible ? 'badge-success' : 'badge-danger'}`}>
-                      {vehicle.disponible ? 'Disponible' : 'Indisponible'}
+                    <span className={`badge ${vehicle.disponibilite ? 'badge-success' : 'badge-danger'}`}>
+                      {vehicle.disponibilite ? 'Disponible' : 'Indisponible'}
                     </span>
                   </div>
                 </div>
@@ -135,23 +135,32 @@ const AdminVehicles = () => {
 
 const VehicleModal = ({ vehicle, onClose }) => {
   const [formData, setFormData] = useState({
-    marque: vehicle?.marque || '',
-    modele: vehicle?.modele || '',
-    immatriculation: vehicle?.immatriculation || '',
-    type: vehicle?.type || '',
-    disponible: vehicle?.disponible ?? true,
+    matricule: vehicle?.matricule || '',
+    capaciteMax: vehicle?.capaciteMax || '',
+    disponibilite: vehicle?.disponibilite ?? true,
   })
   const queryClient = useQueryClient()
 
   const createMutation = useMutation(
-    (data) => vehicleAPI.create(data),
+    (data) => {
+      console.log('=== DEBUG: Données envoyées au backend ===', JSON.stringify(data, null, 2))
+      return vehicleAPI.create(data)
+    },
     {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        console.log('=== DEBUG: Réponse du backend ===', response)
         toast.success('Véhicule créé avec succès')
         queryClient.invalidateQueries('vehicles')
         onClose()
       },
-      onError: () => toast.error('Erreur lors de la création')
+      onError: (error) => {
+        console.error('=== ERREUR lors de la création ===', error)
+        const errorMessage = error?.response?.data?.message 
+          || error?.response?.data?.error 
+          || error?.message 
+          || 'Erreur lors de la création du véhicule'
+        toast.error(`Erreur: ${errorMessage}`)
+      }
     }
   )
 
@@ -185,61 +194,40 @@ const VehicleModal = ({ vehicle, onClose }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-anthracite mb-2">
-              Marque
+              Matricule *
             </label>
             <input
-              type="text"
-              value={formData.marque}
-              onChange={(e) => setFormData({ ...formData, marque: e.target.value })}
+              type="number"
+              value={formData.matricule}
+              onChange={(e) => setFormData({ ...formData, matricule: e.target.value ? parseInt(e.target.value) : '' })}
               className="input-field"
+              placeholder="Ex: 123456"
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-anthracite mb-2">
-              Modèle
+              Capacité maximale (kg) *
             </label>
             <input
-              type="text"
-              value={formData.modele}
-              onChange={(e) => setFormData({ ...formData, modele: e.target.value })}
+              type="number"
+              step="0.1"
+              value={formData.capaciteMax}
+              onChange={(e) => setFormData({ ...formData, capaciteMax: e.target.value ? parseFloat(e.target.value) : '' })}
               className="input-field"
+              placeholder="Ex: 5000"
               required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-anthracite mb-2">
-              Immatriculation
-            </label>
-            <input
-              type="text"
-              value={formData.immatriculation}
-              onChange={(e) => setFormData({ ...formData, immatriculation: e.target.value })}
-              className="input-field"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-anthracite mb-2">
-              Type
-            </label>
-            <input
-              type="text"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="input-field"
-              placeholder="Ex: Camion, Benne, etc."
             />
           </div>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              id="disponible"
-              checked={formData.disponible}
-              onChange={(e) => setFormData({ ...formData, disponible: e.target.checked })}
+              id="disponibilite"
+              checked={formData.disponibilite}
+              onChange={(e) => setFormData({ ...formData, disponibilite: e.target.checked })}
               className="w-4 h-4"
             />
-            <label htmlFor="disponible" className="text-sm font-medium text-anthracite">
+            <label htmlFor="disponibilite" className="text-sm font-medium text-anthracite">
               Disponible
             </label>
           </div>
