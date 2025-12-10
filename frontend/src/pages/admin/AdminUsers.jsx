@@ -191,17 +191,25 @@ const UserModal = ({ user, type, onClose }) => {
   const queryClient = useQueryClient()
 
   const createAgentMutation = useMutation(
-    (data) => agentAPI.create(data),
+    (data) => {
+      console.log('=== DEBUG: Données Agent envoyées ===', JSON.stringify(data, null, 2))
+      return agentAPI.create(data)
+    },
     {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        console.log('=== DEBUG: Réponse Agent du backend ===', response)
         toast.success('Agent créé avec succès')
         queryClient.invalidateQueries('agents')
         onClose()
       },
       onError: (error) => {
-        // Le message d'erreur est déjà extrait par l'intercepteur axios
-        const errorMessage = error.message || 'Erreur lors de la création de l\'agent'
-        toast.error(errorMessage)
+        console.error('=== ERREUR lors de la création Agent ===', error)
+        const errorMessage = error?.response?.data?.message 
+          || error?.response?.data?.error 
+          || error?.response?.statusText
+          || error?.message 
+          || 'Erreur lors de la création de l\'agent'
+        toast.error(`Erreur: ${errorMessage}`)
       }
     }
   )
@@ -285,6 +293,7 @@ const UserModal = ({ user, type, onClose }) => {
     console.log('=== DEBUG: Données à envoyer ===', JSON.stringify(cleanedData, null, 2))
     
     if (type === 'agents') {
+      console.log('=== DEBUG: Envoi Agent ===', JSON.stringify(cleanedData, null, 2))
       createAgentMutation.mutate(cleanedData)
     } else {
       createCitoyenMutation.mutate(cleanedData)

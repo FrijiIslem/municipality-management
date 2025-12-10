@@ -46,7 +46,15 @@ public class UtilisateurController {
         System.out.println("Tache: " + agent.getTache());
         System.out.println("Disponibilite: " + agent.getDisponibilite());
         System.out.println("All fields: " + agent.toString());
-        return utilisateurService.ajouterAgent(agent);
+        try {
+            Agent saved = utilisateurService.ajouterAgent(agent);
+            System.out.println("=== DEBUG: Agent sauvegardé avec ID: " + saved.getId() + " ===");
+            return saved;
+        } catch (Exception e) {
+            System.err.println("=== ERREUR lors de la sauvegarde de l'agent ===");
+            e.printStackTrace();
+            throw e;
+        }
     }
     //---------------get all-----------------------
     @GetMapping("/getcitoyens")

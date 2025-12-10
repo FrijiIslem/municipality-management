@@ -20,7 +20,21 @@ public class VehiculeController {
     @Operation(summary = "Créer un véhicule")
     @PostMapping
     public VehiculeDTO create(@RequestBody VehiculeDTO vehiculeDTO) {
-        return vehiculeService.createVehicule(vehiculeDTO);
+        System.out.println("=== DEBUG: VehiculeDTO reçu ===");
+        System.out.println("VehiculeDTO: " + vehiculeDTO);
+        System.out.println("ID: " + vehiculeDTO.getId());
+        System.out.println("Matricule: " + vehiculeDTO.getMatricule());
+        System.out.println("CapaciteMax: " + vehiculeDTO.getCapaciteMax());
+        System.out.println("Disponibilite: " + vehiculeDTO.isDisponibilite());
+        try {
+            VehiculeDTO saved = vehiculeService.createVehicule(vehiculeDTO);
+            System.out.println("=== DEBUG: Vehicule sauvegardé avec ID: " + saved.getId() + " ===");
+            return saved;
+        } catch (Exception e) {
+            System.err.println("=== ERREUR lors de la sauvegarde du véhicule ===");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // Mettre à jour un véhicule

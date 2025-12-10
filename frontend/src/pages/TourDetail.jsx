@@ -76,12 +76,41 @@ const TourDetail = () => {
   const canComplete = tour.etat === 'EN_COURS'
   const isActive = tour.etat === 'EN_COURS'
 
-  const mapCenter = tour.conteneurs?.[0]?.localisation
-    ? {
-        lat: tour.conteneurs[0].localisation.latitude,
-        lng: tour.conteneurs[0].localisation.longitude,
+  // Calculer le centre de la carte depuis les conteneurs ou utiliser Tunis par défaut
+  const getMapCenter = () => {
+    const TUNIS_CENTER = [36.8065, 10.1815] // [lat, lng] format pour Leaflet
+    
+    if (!tour.conteneurs || tour.conteneurs.length === 0) {
+      return TUNIS_CENTER
+    }
+    
+    // Essayer de parser la localisation du premier conteneur
+    try {
+      const firstContainer = tour.conteneurs[0]
+      let lat, lng
+      
+      if (firstContainer?.localisation) {
+        if (typeof firstContainer.localisation === 'string') {
+          const loc = JSON.parse(firstContainer.localisation)
+          lat = parseFloat(loc.latitude || loc.lat)
+          lng = parseFloat(loc.longitude || loc.lng)
+        } else if (typeof firstContainer.localisation === 'object') {
+          lat = parseFloat(firstContainer.localisation.latitude || firstContainer.localisation.lat)
+          lng = parseFloat(firstContainer.localisation.longitude || firstContainer.localisation.lng)
+        }
+        
+        if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+          return [lat, lng]
+        }
       }
-    : { lat: 36.8065, lng: 10.1815 }
+    } catch (e) {
+      console.warn('Erreur lors du parsing de la localisation:', e)
+    }
+    
+    return TUNIS_CENTER
+  }
+  
+  const mapCenter = getMapCenter()
 
   return (
     <div className="space-y-6">

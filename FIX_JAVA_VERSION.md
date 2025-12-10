@@ -74,3 +74,4 @@ Une fois Java 21 configuré, le backend devrait compiler et démarrer correcteme
 
 **Le problème était la version de Java, pas le code !** ✅
 
+

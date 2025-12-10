@@ -33,7 +33,16 @@ const AdminTours = () => {
             { duration: 8000 }
           )
         } else {
-          toast.error(error?.message || 'Erreur lors de la planification automatique')
+          // Extraire le message d'erreur du backend
+          const errorMessage = error?.response?.data?.message 
+            || error?.response?.data?.error 
+            || error?.message 
+            || 'Erreur lors de la planification automatique'
+          
+          toast.error(
+            `Erreur: ${errorMessage}\n\nVérifiez qu'il y a :\n- Des conteneurs à collecter (saturés ou moyens)\n- Un véhicule disponible\n- 2 agents collecteurs disponibles\n- 1 agent chauffeur disponible`,
+            { duration: 10000 }
+          )
         }
       }
     }

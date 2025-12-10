@@ -36,9 +36,33 @@ const TourMap = ({
   centerOverride = null
 }) => {
   const SFAX_CENTER = [34.7406, 10.7603];
+  const TUNIS_CENTER = [36.8065, 10.1815];
   const SFAX_BOUNDS = [[34.62, 10.65], [34.86, 10.88]];
-  const BOUNDS = bounds || SFAX_BOUNDS;
-  const CENTER = centerOverride || center || SFAX_CENTER;
+  const TUNIS_BOUNDS = [[36.6925111, 10.0037899], [36.9430196, 10.3548094]];
+  
+  // Normaliser le centre pour s'assurer qu'il est valide
+  const normalizeCenter = (c) => {
+    if (!c) return TUNIS_CENTER
+    if (Array.isArray(c) && c.length === 2) {
+      const [lat, lng] = c
+      if (typeof lat === 'number' && typeof lng === 'number' && 
+          !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+        return [lat, lng]
+      }
+    }
+    // Si c'est un objet {lat, lng}
+    if (typeof c === 'object' && c.lat !== undefined && c.lng !== undefined) {
+      const lat = parseFloat(c.lat)
+      const lng = parseFloat(c.lng)
+      if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+        return [lat, lng]
+      }
+    }
+    return TUNIS_CENTER
+  }
+  
+  const BOUNDS = bounds || TUNIS_BOUNDS;
+  const CENTER = normalizeCenter(centerOverride || center);
   
   // Parser l'itinéraire JSON si fourni
   let parsedItineraire = [];

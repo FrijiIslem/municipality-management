@@ -3,6 +3,7 @@ package com.projetJEE.projetJEE.controllers;
 import com.projetJEE.projetJEE.dto.TourneeDto;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
+import com.projetJEE.projetJEE.exceptions.PlanningException;
 import com.projetJEE.projetJEE.services.TourneeService;
 import com.projetJEE.projetJEE.services.AutomaticPlanningService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tournees")
@@ -52,20 +54,29 @@ public class TourneeController {
      * IMPORTANT: Cet endpoint doit être placé AVANT les autres mappings pour éviter les conflits
      */
     @PostMapping("/planifier-automatique")
-    public ResponseEntity<TourneeDto> planifierAutomatique() {
+    public ResponseEntity<?> planifierAutomatique() {
         logger.info("Déclenchement manuel de la planification automatique");
         try {
             TourneeDto tournee = automaticPlanningService.planifyDailyTournees();
-            if (tournee != null) {
-                logger.info("Planification automatique réussie, tournée créée: {}", tournee.getId());
-                return ResponseEntity.ok(tournee);
-            } else {
-                logger.warn("Planification automatique n'a pas pu créer de tournée");
-                return ResponseEntity.badRequest().build();
-            }
+            logger.info("Planification automatique réussie, tournée créée: {}", tournee.getId());
+            return ResponseEntity.ok(tournee);
+        } catch (PlanningException e) {
+            logger.warn("Erreur de planification: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                Map.of(
+                    "error", "Impossible de créer une tournée",
+                    "message", e.getMessage(),
+                    "reason", e.getReason()
+                )
+            );
         } catch (Exception e) {
             logger.error("Erreur lors de la planification automatique", e);
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "error", "Erreur serveur",
+                    "message", e.getMessage() != null ? e.getMessage() : "Une erreur est survenue lors de la planification"
+                )
+            );
         }
     }
 

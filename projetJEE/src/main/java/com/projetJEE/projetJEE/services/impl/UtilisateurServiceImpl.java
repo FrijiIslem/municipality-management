@@ -207,7 +207,15 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
             agentToSave.setTache(agent.getTache());
         }
 
-        return utilisateurRepository.save(agentToSave);
+        System.out.println("=== DEBUG UtilisateurServiceImpl.ajouterAgent ===");
+        System.out.println("Agent à sauvegarder: " + agentToSave);
+        System.out.println("ID avant save: " + agentToSave.getId());
+        
+        Agent saved = utilisateurRepository.save(agentToSave);
+        System.out.println("Agent sauvegardé: " + saved);
+        System.out.println("ID après save: " + saved.getId());
+        
+        return saved;
     }
 
 	@Override

@@ -5,9 +5,11 @@ import com.projetJEE.projetJEE.entities.*;
 import com.projetJEE.projetJEE.entities.enums.EtatRemplissage;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
 import com.projetJEE.projetJEE.entities.enums.TypeNotification;
+import com.projetJEE.projetJEE.mapper.AgentMapper;
 import com.projetJEE.projetJEE.repository.*;
 import com.projetJEE.projetJEE.services.impl.NotificationServiceImpl;
 import com.projetJEE.projetJEE.dto.NotificationDto;
+import com.projetJEE.projetJEE.exceptions.PlanningException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +56,8 @@ public class AutomaticPlanningService {
     @Autowired
     private com.projetJEE.projetJEE.mapper.VehiculeMapper vehiculeMapper;
 
-    @Autowired
     private com.projetJEE.projetJEE.mapper.AgentMapper agentMapper;
+
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -73,8 +75,10 @@ public class AutomaticPlanningService {
             List<Conteneur> conteneursToCollect = getConteneursToCollect();
             
             if (conteneursToCollect.isEmpty()) {
-                logger.info("Aucun conteneur nécessite de collecte aujourd'hui");
-                return null;
+                String message = "Aucun conteneur nécessite de collecte aujourd'hui (aucun conteneur saturé ou moyen)";
+                logger.info(message);
+                sendNotificationToAdmin("Planification annulée", message);
+                throw new PlanningException(message, "NO_CONTAINERS");
             }
 
             logger.info("Nombre de conteneurs à collecter: {}", conteneursToCollect.size());
@@ -82,67 +86,95 @@ public class AutomaticPlanningService {
             // 2. Sélectionner un véhicule disponible
             Vehicule vehicule = selectAvailableVehicule();
             if (vehicule == null) {
-                logger.warn("Aucun véhicule disponible pour la planification");
-                sendNotificationToAdmin("Erreur de planification", 
-                    "Aucun véhicule disponible pour planifier les tournées du jour.");
-                return null;
+                String message = "Aucun véhicule disponible pour la planification";
+                logger.warn(message);
+                sendNotificationToAdmin("Erreur de planification", message);
+                throw new PlanningException(message, "NO_VEHICLE");
             }
 
             // 3. Sélectionner 2 agents collecteurs disponibles
             List<Agent> collecteurs = selectAvailableCollectors(2);
             if (collecteurs.size() < 2) {
-                logger.warn("Pas assez d'agents collecteurs disponibles (trouvé: {})", collecteurs.size());
-                sendNotificationToAdmin("Erreur de planification", 
-                    String.format("Pas assez d'agents collecteurs disponibles (trouvé: %d, requis: 2)", collecteurs.size()));
-                return null;
+                String message = String.format("Pas assez d'agents collecteurs disponibles (trouvé: %d, requis: 2)", collecteurs.size());
+                logger.warn(message);
+                sendNotificationToAdmin("Erreur de planification", message);
+                throw new PlanningException(message, "NOT_ENOUGH_COLLECTORS");
             }
 
             // 4. Sélectionner 1 agent chauffeur disponible
             Agent chauffeur = selectAvailableChauffeur();
             if (chauffeur == null) {
-                logger.warn("Aucun agent chauffeur disponible");
-                sendNotificationToAdmin("Erreur de planification", 
-                    "Aucun agent chauffeur disponible pour planifier les tournées du jour.");
-                return null;
+                String message = "Aucun agent chauffeur disponible pour la planification";
+                logger.warn(message);
+                sendNotificationToAdmin("Erreur de planification", message);
+                throw new PlanningException(message, "NO_DRIVER");
             }
 
             // 5. Calculer le chemin optimal
             List<Conteneur> optimizedRoute = routeOptimizationService.calculateOptimalRoute(conteneursToCollect);
             
             if (optimizedRoute.isEmpty()) {
-                logger.warn("Impossible de calculer un chemin optimal");
-                return null;
+                String message = "Impossible de calculer un chemin optimal (localisations invalides)";
+                logger.warn(message);
+                throw new PlanningException(message, "INVALID_ROUTE");
             }
 
-            // 6. Créer la tournée
-            TourneeDto tourneeDto = createTourneeDto(vehicule, collecteurs, chauffeur, optimizedRoute);
+            // 6. Créer la tournée (sans assigner les agents pour éviter les conflits)
+            TourneeDto tourneeDto = createTourneeDto(vehicule, null, null, optimizedRoute);
             
             // 7. Sauvegarder la tournée
             TourneeDto savedTournee = tourneeService.createTournee(tourneeDto);
             
-            // 8. Affecter les ressources
+            // 8. Affecter les ressources (cela gère correctement la disponibilité)
+            logger.info("Affectation du véhicule: {}", vehicule.getId());
             tourneeService.affectervehicule(savedTournee.getId(), vehicule.getId());
+            
+            logger.info("Affectation du chauffeur: {}", chauffeur.getId());
             tourneeService.affecterAgent(savedTournee.getId(), chauffeur.getId());
+            
+            logger.info("Affectation des {} collecteurs", collecteurs.size());
             for (Agent collecteur : collecteurs) {
+                logger.info("Affectation du collecteur: {} (disponibilite avant: {})", 
+                    collecteur.getId(), collecteur.getDisponibilite());
                 tourneeService.affecterAgent(savedTournee.getId(), collecteur.getId());
+                
+                // Vérifier que l'agent a bien été marqué comme indisponible
+                Agent updatedCollector = utilisateurRepository.findById(collecteur.getId())
+                    .filter(u -> u instanceof Agent)
+                    .map(u -> (Agent) u)
+                    .orElse(null);
+                if (updatedCollector != null) {
+                    logger.info("Collecteur {} après affectation - disponibilite: {}", 
+                        updatedCollector.getId(), updatedCollector.getDisponibilite());
+                    if (Boolean.TRUE.equals(updatedCollector.getDisponibilite())) {
+                        logger.warn("⚠️ ATTENTION: Le collecteur {} est toujours disponible après affectation !", 
+                            updatedCollector.getId());
+                    }
+                }
             }
 
             // 9. Marquer le véhicule comme indisponible
             vehicule.setDisponibilite(false);
             vehiculeRepository.save(vehicule);
 
-            // 10. Envoyer une notification à l'admin avec les détails
-            sendTourneeNotificationToAdmin(savedTournee, vehicule, collecteurs, chauffeur, optimizedRoute);
+            // 10. Récupérer la tournée mise à jour avec tous les agents assignés
+            TourneeDto finalTournee = tourneeService.getTourneeById(savedTournee.getId());
 
-            logger.info("Planification automatique terminée avec succès. Tournée créée: {}", savedTournee.getId());
+            // 11. Envoyer une notification à l'admin avec les détails
+            sendTourneeNotificationToAdmin(finalTournee, vehicule, collecteurs, chauffeur, optimizedRoute);
+
+            logger.info("Planification automatique terminée avec succès. Tournée créée: {}", finalTournee.getId());
             
-            return savedTournee;
+            return finalTournee;
 
+        } catch (PlanningException e) {
+            // Re-lancer les PlanningException pour qu'elles soient gérées par le contrôleur
+            throw e;
         } catch (Exception e) {
             logger.error("Erreur lors de la planification automatique", e);
             sendNotificationToAdmin("Erreur de planification", 
                 "Une erreur est survenue lors de la planification automatique: " + e.getMessage());
-            return null;
+            throw new PlanningException("Erreur lors de la planification: " + e.getMessage(), "UNKNOWN_ERROR");
         }
     }
 
@@ -212,6 +244,7 @@ public class AutomaticPlanningService {
 
     /**
      * Crée un DTO de tournée avec les informations sélectionnées
+     * Les agents peuvent être null si on veut les assigner après via affecterAgent
      */
     private TourneeDto createTourneeDto(Vehicule vehicule, List<Agent> collecteurs, 
                                        Agent chauffeur, List<Conteneur> conteneurs) {
@@ -231,18 +264,25 @@ public class AutomaticPlanningService {
         // Date de fin estimée: dateDebut + 6 heures
         LocalDateTime dateFin = dateDebut.plusHours(6);
 
-        return TourneeDto.builder()
+        TourneeDto.TourneeDtoBuilder builder = TourneeDto.builder()
             .conteneurs(conteneurDTOs)
             .vehicule(vehiculeMapper.toDTO(vehicule))
-            .agentChauffeur(agentMapper.toDTO(chauffeur))
-            .agentRamasseurs(collecteurs.stream()
-                .map(agentMapper::toDTO)
-                .collect(Collectors.toList()))
             .dateDebut(dateDebut)
             .dateFin(dateFin)
             .itineraire(itineraire)
-            .etat(EtatTournee.PLANIFIEE)
-            .build();
+            .etat(EtatTournee.PLANIFIEE);
+        
+        // Assigner les agents seulement s'ils sont fournis (pour compatibilité)
+        if (chauffeur != null) {
+            builder.agentChauffeur(AgentMapper.toDTO(chauffeur));
+        }
+        if (collecteurs != null && !collecteurs.isEmpty()) {
+            builder.agentRamasseurs(collecteurs.stream()
+                .map(AgentMapper::toDTO)
+                .collect(Collectors.toList()));
+        }
+        
+        return builder.build();
     }
 
     /**
