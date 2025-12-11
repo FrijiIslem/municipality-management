@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     } else if (role === 'CITOYEN') {
       return <Navigate to="/citoyen" replace />
     } else {
-      return <Navigate to="/" replace />
+      return <Navigate to="/app" replace />
     }
   }
 

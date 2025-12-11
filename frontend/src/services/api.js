@@ -94,6 +94,7 @@ api.interceptors.response.use(
 // Tour API
 export const tourAPI = {
   getAll: () => api.get('/tournees'),
+  getByAgent: (agentId) => api.get(`/tournees/agent/${agentId}`),
   getById: (id) => api.get(`/tournees/${id}`),
   create: (data) => api.post('/tournees', data),
   update: (id, data) => api.put(`/tournees/${id}`, data),
@@ -130,6 +131,31 @@ export const notificationAPI = {
     )
   },
   getByDestination: (destination) => api.get(`/notifications/destination/${destination}`),
+  // Convenience: role/destination-scoped fetch with fallback to client-side filtering
+  getAllFor: async (destination) => {
+    try {
+      const data = await api.get(`/notifications/destination/${destination}`)
+      return data
+    } catch (e) {
+      const all = await api.get('/notifications')
+      if (Array.isArray(all)) {
+        const dest = String(destination || '').toLowerCase()
+        return all.filter(n => String(n?.destination || '').toLowerCase() === dest)
+      }
+      return []
+    }
+  },
+  getUnreadFor: async (destination) => {
+    try {
+      const data = await api.get(`/notifications/destination/${destination}`)
+      return Array.isArray(data) ? data.filter(n => !n.lu) : []
+    } catch (e) {
+      const all = await api.get('/notifications')
+      const dest = String(destination || '').toLowerCase()
+      const filtered = Array.isArray(all) ? all.filter(n => String(n?.destination || '').toLowerCase() === dest) : []
+      return filtered.filter(n => !n.lu)
+    }
+  },
   getByType: (type) => api.get(`/notifications/type/${type}`),
   create: (data) => api.post('/notifications', data),
   // Note: These endpoints may need to be implemented in the backend
@@ -172,13 +198,150 @@ export const citoyenAPI = {
 
 // Incident API
 export const incidentAPI = {
-  getAll: () => api.get('/Incidents/all'),
-  getByStatut: (statut) => api.get(`/Incidents/statut/${statut}`),
-  search: (date, hour) => api.get('/Incidents/search', {
-    params: { date, hour },
-  }),
-  countByCategorie: (categorie) => api.get(`/Incidents/countByCategorie/${categorie}`),
-  create: (data) => api.post('/Incidents/create', data),
+  getAll: async () => {
+    const attempts = [
+      () => api.get('/Incidents/all'),
+      () => api.get('/incidents/all'),
+      () => api.get('/Incidents'),
+      () => api.get('/incidents'),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try { return await attempt() } catch (e) { lastError = e }
+    }
+    throw lastError
+  },
+  getByStatut: async (statut) => {
+    const attempts = [
+      () => api.get(`/Incidents/statut/${statut}`),
+      () => api.get(`/incidents/statut/${statut}`),
+      () => api.get(`/Incidents/status/${statut}`),
+      () => api.get(`/incidents/status/${statut}`),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try { return await attempt() } catch (e) { lastError = e }
+    }
+    throw lastError
+  },
+  search: async (date, hour) => {
+    const params1 = { params: { date, hour } }
+    const paramsHeure = { params: { date, heure: hour } }
+    const paramsDateOnly = { params: { date } }
+    const paramsHourOnly = { params: { hour } }
+    const attempts = [
+      () => api.get('/Incidents/search', params1),
+      () => api.get('/incidents/search', params1),
+      () => api.get('/Incidents/search', paramsHeure),
+      () => api.get('/incidents/search', paramsHeure),
+      () => api.get('/Incidents/byDate', paramsDateOnly),
+      () => api.get('/incidents/byDate', paramsDateOnly),
+      () => api.get('/Incidents/byDay', paramsDateOnly),
+      () => api.get('/incidents/byDay', paramsDateOnly),
+      () => api.get('/Incidents/day', paramsDateOnly),
+      () => api.get('/incidents/day', paramsDateOnly),
+      () => api.get('/Incidents/byHour', paramsHourOnly),
+      () => api.get('/incidents/byHour', paramsHourOnly),
+      () => api.get('/Incidents/byHeure', { params: { heure: hour } }),
+      () => api.get('/incidents/byHeure', { params: { heure: hour } }),
+      () => api.get('/Incidents/hour', paramsHourOnly),
+      () => api.get('/incidents/hour', paramsHourOnly),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try {
+        const data = await attempt()
+        if (Array.isArray(data)) return data
+      } catch (e) {
+        lastError = e
+      }
+    }
+    // Fallback: client-side filtering if server search endpoints are unavailable
+    try {
+      const all = await incidentAPI.getAll()
+      if (!Array.isArray(all)) return []
+      return all.filter((inc) => {
+        try {
+          if (!inc?.date) return false
+          const d = new Date(inc.date)
+          const isoDate = isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+          const hh = String(d.getHours()).padStart(2, '0')
+          const mm = String(d.getMinutes()).padStart(2, '0')
+          const hm = `${hh}:${mm}`
+          if (date && isoDate !== date) return false
+          if (hour) {
+            const hOnly = hour.length <= 2 ? hour : hour.slice(0,2)
+            if (hOnly.length === 2) {
+              if (hh !== hOnly) return false
+            } else if (hour.length >= 4) {
+              if (hm !== hour.slice(0,5)) return false
+            }
+          }
+          return true
+        } catch { return false }
+      })
+    } catch (e) {
+      throw lastError || e
+    }
+  },
+  countByCategorie: async (categorie) => {
+    const attempts = [
+      () => api.get(`/Incidents/countByCategorie/${categorie}`),
+      () => api.get(`/incidents/countByCategorie/${categorie}`),
+      () => api.get(`/Incidents/count/${categorie}`),
+      () => api.get(`/incidents/count/${categorie}`),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try { return await attempt() } catch (e) { lastError = e }
+    }
+    throw lastError
+  },
+  create: async (data) => {
+    const attempts = [
+      () => api.post('/Incidents/create', data),
+      () => api.post('/incidents/create', data),
+      () => api.post('/Incidents', data),
+      () => api.post('/incidents', data),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try { return await attempt() } catch (e) { lastError = e }
+    }
+    throw lastError
+  },
+  updateStatus: async (id, statut) => {
+    const attempts = [
+      () => api.put('/Incidents/updateStatut', null, { params: { id, statut } }),
+      () => api.post('/Incidents/updateStatut', null, { params: { id, statut } }),
+      () => api.put('/Incidents/updateStatus', null, { params: { id, statut } }),
+      () => api.post('/Incidents/updateStatus', null, { params: { id, statut } }),
+      () => api.put('/Incidents/modifierStatut', null, { params: { id, statut } }),
+      () => api.post('/Incidents/modifierStatut', null, { params: { id, statut } }),
+      () => api.put(`/Incidents/${id}/statut`, null, { params: { statut } }),
+      () => api.put(`/Incidents/${id}/status`, null, { params: { statut } }),
+      () => api.put(`/Incidents/${id}`, { statut }),
+      // lowercase variants
+      () => api.put('/incidents/updateStatut', null, { params: { id, statut } }),
+      () => api.post('/incidents/updateStatut', null, { params: { id, statut } }),
+      () => api.put('/incidents/updateStatus', null, { params: { id, statut } }),
+      () => api.post('/incidents/updateStatus', null, { params: { id, statut } }),
+      () => api.put('/incidents/modifierStatut', null, { params: { id, statut } }),
+      () => api.post('/incidents/modifierStatut', null, { params: { id, statut } }),
+      () => api.put(`/incidents/${id}/statut`, null, { params: { statut } }),
+      () => api.put(`/incidents/${id}/status`, null, { params: { statut } }),
+      () => api.put(`/incidents/${id}`, { statut }),
+    ]
+    let lastError
+    for (const attempt of attempts) {
+      try {
+        return await attempt()
+      } catch (e) {
+        lastError = e
+      }
+    }
+    throw lastError
+  },
 }
 
 // Vehicle API

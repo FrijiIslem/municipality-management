@@ -9,10 +9,10 @@ import {
 import useAuthStore from '../../store/authStore'
 
 const menuItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Tableau de bord' },
-  { path: '/tours', icon: Route, label: 'Tournées' },
-  { path: '/containers', icon: Trash2, label: 'Conteneurs' },
-  { path: '/notifications', icon: Bell, label: 'Notifications' },
+  { path: '/app', icon: LayoutDashboard, label: 'Tableau de bord' },
+  { path: '/app/tours', icon: Route, label: 'Tournées' },
+  { path: '/app/containers', icon: Trash2, label: 'Conteneurs' },
+  { path: '/app/notifications', icon: Bell, label: 'Notifications' },
 ]
 
 const Sidebar = () => {

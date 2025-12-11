@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { tourAPI } from '../services/api'
 import { toast } from 'react-hot-toast'
@@ -13,6 +13,7 @@ const TUNIS_BOUNDS = [[36.6925111, 10.0037899], [36.9430196, 10.3548094]]
 const TourDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
 
   const { data: tour, isLoading } = useQuery(
@@ -57,7 +58,8 @@ const TourDetail = () => {
         toast.success('Tournée terminée avec succès. Les ressources ont été libérées.')
         queryClient.invalidateQueries(['tour', id])
         queryClient.invalidateQueries('tours')
-        navigate('/tours')
+        const base = location.pathname.startsWith('/admin') ? '/admin' : '/app'
+        navigate(`${base}/tours`)
       },
       onError: (error) => {
         const message = error?.response?.data?.message || error?.message || 'Erreur lors de la finalisation de la tournée'

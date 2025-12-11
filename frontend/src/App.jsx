@@ -10,6 +10,8 @@ import TourDetail from './pages/TourDetail'
 import Containers from './pages/Containers'
 import Notifications from './pages/Notifications'
 import Login from './pages/Login'
+import Home from './pages/Home'
+import Register from './pages/Register'
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -34,9 +36,11 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/register" element={<Register />} />
       
       {/* Agent routes */}
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="tours" element={<Tours />} />
         <Route path="tours/:id" element={<TourDetail />} />

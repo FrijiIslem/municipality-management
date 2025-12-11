@@ -7,8 +7,8 @@ import useAuthStore from '../../store/authStore'
 const AdminHeader = () => {
   const { user, logout } = useAuthStore()
   const { data: unreadCount = 0 } = useQuery(
-    'unreadNotifications',
-    () => notificationAPI.getUnread(),
+    ['unreadNotifications', 'admin'],
+    () => notificationAPI.getUnreadFor('admin'),
     {
       select: (data) => data?.length || 0,
       refetchInterval: 30000,

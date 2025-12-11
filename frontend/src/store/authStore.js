@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { citoyenAPI, authAPI } from '../services/api'
 
 // Simple localStorage-based persistence
 const getStoredAuth = () => {
@@ -51,6 +52,38 @@ const useAuthStore = create((set) => {
       if (token) {
         localStorage.setItem('token', token)
       }
+    },
+    
+    register: async ({ nom, prenom, email, telephone, adresse, password, role = 'CITOYEN' }) => {
+      const payload = {
+        nom,
+        prenom,
+        email,
+        numeroTel: telephone,
+        telephone,
+        adresse,
+        password,
+        role,
+      }
+      await citoyenAPI.create(payload)
+      const response = await authAPI.login(email, password)
+      const userData = {
+        id: response.id,
+        email: response.email,
+        nom: response.nom,
+        prenom: response.prenom,
+        numeroTel: response.numeroTel,
+        role: response.role || 'CITOYEN',
+      }
+      const newState = {
+        user: userData,
+        role: userData.role || 'CITOYEN',
+        isAuthenticated: true,
+        token: null,
+      }
+      set(newState)
+      setStoredAuth(newState)
+      return userData
     },
     
     logout: () => {

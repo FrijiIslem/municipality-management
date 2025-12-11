@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { notificationAPI } from '../services/api'
+import { notificationAPI, tourAPI } from '../services/api'
+import useAuthStore from '../store/authStore'
 import { toast } from 'react-hot-toast'
 import { Bell, CheckCircle, Clock } from 'lucide-react'
 import { format } from 'date-fns'
@@ -7,18 +8,72 @@ import { fr } from 'date-fns/locale'
 
 const Notifications = () => {
   const queryClient = useQueryClient()
+  const { role, user } = useAuthStore()
+  const destination = role === 'CHAUFFEUR'
+    ? 'chauffeur'
+    : (role === 'RAMASSEUR' || role === 'AGENT_RAMSSEUR')
+      ? 'ramasseur'
+      : 'agent'
 
   const { data: notifications = [], isLoading } = useQuery(
-    'notifications',
-    notificationAPI.getAll
+    ['notifications', destination, user?.id || 'anon'],
+    () => notificationAPI.getAllFor(destination),
+    {
+      select: (data) => {
+        const list = Array.isArray(data) ? data : []
+        if (!user?.id) return list
+        return list.filter(n => (
+          n?.userId === user.id ||
+          n?.utilisateurId === user.id ||
+          n?.agentId === user.id ||
+          n?.destinataireId === user.id ||
+          n?.citoyenId === user.id
+        ))
+      }
+    }
   )
+
+  // Fetch tours to identify those assigned to current agent (chauffeur/ramasseur)
+  const { data: tours = [] } = useQuery('tours', tourAPI.getAll)
+
+  // Additional scoping: for RAMASSEUR/CHAUFFEUR, only notifications tied to their tours
+  const myTourIds = (() => {
+    if (!Array.isArray(tours) || !user?.id) return []
+    if (destination === 'chauffeur') {
+      return tours
+        .filter(t => t?.agentChauffeur?.id === user.id)
+        .map(t => t.id)
+    }
+    if (destination === 'ramasseur') {
+      return tours
+        .filter(t => Array.isArray(t?.agentRamasseurs) && t.agentRamasseurs.some(a => a?.id === user.id))
+        .map(t => t.id)
+    }
+    return []
+  })()
+
+  const scopedNotifications = (() => {
+    if (!Array.isArray(notifications)) return []
+    if (myTourIds.length === 0) return notifications
+    const ids = new Set(myTourIds)
+    return notifications.filter(n => {
+      const msg = (n?.message || n?.contenu || '').toString()
+      const tourId = n?.tourId || n?.tourneeId || null
+      if (tourId && ids.has(tourId)) return true
+      // Fallback: check if message mentions any of my tour ids (full or with '#')
+      for (const id of ids) {
+        if (msg.includes(id) || msg.includes(`#${id}`)) return true
+      }
+      return false
+    })
+  })()
 
   const markAsReadMutation = useMutation(
     (id) => notificationAPI.markAsRead(id),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('notifications')
-        queryClient.invalidateQueries('unreadNotifications')
+        queryClient.invalidateQueries(['notifications', destination])
+        queryClient.invalidateQueries(['unreadNotifications', destination])
       },
     }
   )
@@ -28,8 +83,8 @@ const Notifications = () => {
     {
       onSuccess: () => {
         toast.success('Toutes les notifications ont été marquées comme lues')
-        queryClient.invalidateQueries('notifications')
-        queryClient.invalidateQueries('unreadNotifications')
+        queryClient.invalidateQueries(['notifications', destination])
+        queryClient.invalidateQueries(['unreadNotifications', destination])
       },
     }
   )
@@ -42,7 +97,7 @@ const Notifications = () => {
     )
   }
 
-  const unreadNotifications = notifications.filter(n => !n.lu)
+  const unreadNotifications = scopedNotifications.filter(n => !n.lu)
 
   return (
     <div className="space-y-6">
@@ -69,9 +124,9 @@ const Notifications = () => {
       </div>
 
       <div className="card">
-        {notifications.length > 0 ? (
+        {scopedNotifications.length > 0 ? (
           <div className="space-y-3">
-            {notifications.map((notification) => (
+            {scopedNotifications.map((notification) => (
               <div
                 key={notification.id}
                 className={`p-4 border rounded-lg transition-all ${

@@ -7,8 +7,8 @@ import useAuthStore from '../../store/authStore'
 const CitoyenHeader = () => {
   const { user, logout } = useAuthStore()
   const { data: unreadCount = 0 } = useQuery(
-    'unreadNotifications',
-    () => notificationAPI.getUnread(),
+    ['unreadNotifications', 'citoyen'],
+    () => notificationAPI.getUnreadFor('citoyen'),
     {
       select: (data) => data?.length || 0,
       refetchInterval: 30000,

@@ -249,22 +249,21 @@ public class TourneeServiceImpl implements TourneeService {
     }
 
     @Override
-    public Duration getDureeTournee(String id) {
-        return tourneeRepository.findById(id).map(tournee -> {
-            if (tournee.getDateDebut() != null && tournee.getDateFin() != null) {
-                return Duration.between(tournee.getDateDebut(), tournee.getDateFin());
-            }
-            return Duration.ZERO;
-        }).orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
-    }
-
-    @Override
-    public List<TourneeDto> getTourneesByEtat(EtatTournee etat) {
-        return tourneeRepository.findByEtat(etat).stream()
+    public List<TourneeDto> getTourneesByAgent(String agentId) {
+        // Récupérer toutes les tournées de l'agent (en tant que chauffeur ou ramasseur)
+        List<Tournee> tourneesChauffeur = tourneeRepository.findByAgentChauffeurId(agentId);
+        List<Tournee> tourneesRamasseur = tourneeRepository.findByAgentRamasseursId(agentId);
+        
+        // Fusionner les listes et supprimer les doublons
+        Set<Tournee> tourneesUniques = new HashSet<>();
+        tourneesUniques.addAll(tourneesChauffeur);
+        tourneesUniques.addAll(tourneesRamasseur);
+        
+        // Convertir en DTO
+        return tourneesUniques.stream()
                 .map(tourneeMapper::toDTO)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     public Double getDureeMoyenneTournees() {

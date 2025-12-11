@@ -38,7 +38,7 @@ const Login = () => {
         } else if (userData.role === 'CITOYEN') {
           navigate('/citoyen')
         } else {
-          navigate('/')
+          navigate('/app')
         }
       } else {
         toast.error('Email ou mot de passe incorrect')

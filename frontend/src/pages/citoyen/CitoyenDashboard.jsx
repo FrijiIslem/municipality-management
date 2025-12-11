@@ -14,7 +14,23 @@ const CitoyenDashboard = () => {
     }
   )
   const { data: containers = [] } = useQuery('containers', containerAPI.getAll)
-  const { data: notifications = [] } = useQuery('notifications', notificationAPI.getAll)
+  const destination = 'citoyen'
+  const { data: notifications = [] } = useQuery(
+    ['notifications', destination, user?.id || 'anon'],
+    () => notificationAPI.getAllFor(destination),
+    {
+      select: (data) => {
+        const list = Array.isArray(data) ? data : []
+        if (!user?.id) return list
+        return list.filter(n => (
+          n?.userId === user.id ||
+          n?.utilisateurId === user.id ||
+          n?.destinataireId === user.id ||
+          n?.citoyenId === user.id
+        ))
+      }
+    }
+  )
 
   const myIncidents = incidents.filter(i => i.utilisateurId === user?.id)
   const pendingIncidents = myIncidents.filter(i => i.statut === 'EN_ATTENTE')

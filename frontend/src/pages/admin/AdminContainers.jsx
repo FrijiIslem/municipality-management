@@ -380,22 +380,6 @@ const AddContainerModal = ({ containers, selectedPosition, onMapClick, onClose, 
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-anthracite mb-2">
-                  Statut couleur
-                </label>
-                <select
-                  value={formData.couleurStatut}
-                  onChange={(e) => setFormData({ ...formData, couleurStatut: e.target.value })}
-                  className="input-field"
-                  required
-                >
-                  <option value="vert">Vert</option>
-                  <option value="orange">Orange</option>
-                  <option value="rouge">Rouge</option>
-                </select>
-              </div>
-
               <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="submit"

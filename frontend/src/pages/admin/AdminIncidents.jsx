@@ -9,9 +9,30 @@ import { fr } from 'date-fns/locale'
 const AdminIncidents = () => {
   const [filterStatut, setFilterStatut] = useState('all')
   const [filterCategorie, setFilterCategorie] = useState('all')
+  const [filterDate, setFilterDate] = useState('')
+  const [filterHour, setFilterHour] = useState('')
+  const [draftStatus, setDraftStatus] = useState({})
   const queryClient = useQueryClient()
 
-  const { data: incidents = [], isLoading } = useQuery('incidents', incidentAPI.getAll)
+  const incidentsKey = ['incidents', filterDate || null, filterHour || null]
+  const { data: incidents = [], isLoading } = useQuery(
+    incidentsKey,
+    () => (filterDate || filterHour) ? incidentAPI.search(filterDate, filterHour) : incidentAPI.getAll()
+  )
+
+  const updateStatusMutation = useMutation(
+    ({ id, statut }) => incidentAPI.updateStatus(id, statut),
+    {
+      onSuccess: () => {
+        toast.success('Statut mis à jour')
+        queryClient.invalidateQueries(incidentsKey)
+        queryClient.invalidateQueries('incidents')
+      },
+      onError: (error) => {
+        toast.error(error?.message || 'Erreur lors de la mise à jour du statut')
+      }
+    }
+  )
 
   const filteredIncidents = incidents.filter(incident => {
     if (filterStatut !== 'all' && incident.statut !== filterStatut) return false
@@ -49,6 +70,18 @@ const AdminIncidents = () => {
             <Filter className="w-5 h-5 text-gray-600" />
             <span className="font-medium text-anthracite">Filtres:</span>
           </div>
+          <input
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="input-field w-auto"
+          />
+          <input
+            type="time"
+            value={filterHour}
+            onChange={(e) => setFilterHour(e.target.value)}
+            className="input-field w-auto"
+          />
           <select
             value={filterStatut}
             onChange={(e) => setFilterStatut(e.target.value)}
@@ -69,6 +102,19 @@ const AdminIncidents = () => {
             <option value="PANNE_VEHICULE">Panne véhicule</option>
             <option value="CONTENEUR">Conteneur</option>
           </select>
+          <button
+            onClick={() => queryClient.invalidateQueries(incidentsKey)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Rechercher
+          </button>
+          <button
+            onClick={() => { setFilterDate(''); setFilterHour('') }}
+            className="btn-outline"
+          >
+            Réinitialiser
+          </button>
         </div>
       </div>
 
@@ -115,6 +161,24 @@ const AdminIncidents = () => {
                           {incident.utilisateurId && (
                             <span>👤 ID: {incident.utilisateurId.substring(0, 8)}...</span>
                           )}
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <select
+                            value={draftStatus[incident.id] ?? incident.statut}
+                            onChange={(e) => setDraftStatus(prev => ({ ...prev, [incident.id]: e.target.value }))}
+                            className="input-field w-auto"
+                          >
+                            <option value="EN_ATTENTE">En attente</option>
+                            <option value="SEEN">Vu</option>
+                            <option value="FIXEE">Résolu</option>
+                          </select>
+                          <button
+                            onClick={() => updateStatusMutation.mutate({ id: incident.id, statut: draftStatus[incident.id] ?? incident.statut })}
+                            disabled={updateStatusMutation.isLoading}
+                            className="btn-primary"
+                          >
+                            Mettre à jour
+                          </button>
                         </div>
                       </div>
                     </div>

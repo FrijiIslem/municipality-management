@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { notificationAPI } from '../../services/api'
+import useAuthStore from '../../store/authStore'
 import { toast } from 'react-hot-toast'
 import { Bell, CheckCircle, Clock } from 'lucide-react'
 import { format } from 'date-fns'
@@ -7,18 +8,32 @@ import { fr } from 'date-fns/locale'
 
 const CitoyenNotifications = () => {
   const queryClient = useQueryClient()
+  const { user } = useAuthStore()
+  const destination = 'citoyen'
 
   const { data: notifications = [], isLoading } = useQuery(
-    'notifications',
-    notificationAPI.getAll
+    ['notifications', destination, user?.id || 'anon'],
+    () => notificationAPI.getAllFor(destination),
+    {
+      select: (data) => {
+        const list = Array.isArray(data) ? data : []
+        if (!user?.id) return list
+        return list.filter(n => (
+          n?.userId === user.id ||
+          n?.utilisateurId === user.id ||
+          n?.destinataireId === user.id ||
+          n?.citoyenId === user.id
+        ))
+      }
+    }
   )
 
   const markAsReadMutation = useMutation(
     (id) => notificationAPI.markAsRead(id),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('notifications')
-        queryClient.invalidateQueries('unreadNotifications')
+        queryClient.invalidateQueries(['notifications', destination])
+        queryClient.invalidateQueries(['unreadNotifications', destination])
       },
     }
   )
@@ -28,8 +43,8 @@ const CitoyenNotifications = () => {
     {
       onSuccess: () => {
         toast.success('Toutes les notifications ont été marquées comme lues')
-        queryClient.invalidateQueries('notifications')
-        queryClient.invalidateQueries('unreadNotifications')
+        queryClient.invalidateQueries(['notifications', destination])
+        queryClient.invalidateQueries(['unreadNotifications', destination])
       },
     }
   )

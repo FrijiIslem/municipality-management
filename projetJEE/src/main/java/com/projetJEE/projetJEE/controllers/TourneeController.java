@@ -48,9 +48,13 @@ public class TourneeController {
         return ResponseEntity.ok(tournees);
     }
 
-    /**
-     * Endpoint de test pour vérifier que le contrôleur fonctionne
-     */
+    @GetMapping("/agent/{agentId}")
+    public ResponseEntity<List<TourneeDto>> getTourneesByAgent(@PathVariable String agentId) {
+        List<TourneeDto> tournees = tourneeService.getTourneesByAgent(agentId);
+        logger.info("Fetched {} tournees for agent {}", tournees.size(), agentId);
+        return ResponseEntity.ok(tournees);
+    }
+
     @GetMapping("/test-route")
     public ResponseEntity<Map<String, String>> testRoute() {
         logger.info("=== TEST ENDPOINT ROUTE APPELE ===");
@@ -244,12 +248,6 @@ public class TourneeController {
     public ResponseEntity<Double> getDureeMoyenneTournees() {
         Double dureeMoyenne = tourneeService.getDureeMoyenneTournees();
         return ResponseEntity.ok(dureeMoyenne);
-    }
-
-    @GetMapping("/agent/{agentId}")
-    public ResponseEntity<List<TourneeDto>> getTourneesByAgent(@PathVariable String agentId) {
-        List<TourneeDto> tournees = tourneeService.getTourneesByAgent(agentId);
-        return ResponseEntity.ok(tournees);
     }
 
     /**

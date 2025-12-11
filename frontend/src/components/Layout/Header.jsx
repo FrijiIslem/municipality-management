@@ -2,11 +2,19 @@ import { Bell, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'react-query'
 import { notificationAPI } from '../../services/api'
+import useAuthStore from '../../store/authStore'
 
 const Header = () => {
+  const { role } = useAuthStore()
+  const destination = role === 'CHAUFFEUR'
+    ? 'chauffeur'
+    : (role === 'RAMASSEUR' || role === 'AGENT_RAMSSEUR')
+      ? 'ramasseur'
+      : 'agent'
+
   const { data: unreadCount = 0 } = useQuery(
-    'unreadNotifications',
-    () => notificationAPI.getUnread(),
+    ['unreadNotifications', destination],
+    () => notificationAPI.getUnreadFor(destination),
     {
       select: (data) => data?.length || 0,
       refetchInterval: 30000, // Refresh every 30 seconds
@@ -27,7 +35,7 @@ const Header = () => {
         
         <div className="flex items-center gap-4">
           <Link
-            to="/notifications"
+            to="/app/notifications"
             className="relative p-2 rounded-lg hover:bg-light-gray transition-colors"
           >
             <Bell className="w-6 h-6 text-anthracite" />

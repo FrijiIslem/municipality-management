@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Clock, CheckCircle, XCircle, Route, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import useAuthStore from '../store/authStore'
 
 const statusConfig = {
   PLANIFIEE: { label: 'Planifiée', icon: Clock, color: 'badge-info' },
@@ -16,7 +17,14 @@ const statusConfig = {
 }
 
 const Tours = () => {
-  const { data: tours = [], isLoading } = useQuery('tours', tourAPI.getAll)
+  const { user, role } = useAuthStore()
+  
+  const { data: tours = [], isLoading } = useQuery(
+    ['tours', user?.id],
+    () => role === 'ADMIN' 
+      ? tourAPI.getAll() 
+      : user?.id ? tourAPI.getByAgent(user.id) : Promise.resolve([])
+  )
 
   if (isLoading) {
     return (
@@ -87,7 +95,7 @@ const Tours = () => {
                       </td>
                       <td className="py-4 px-4">
                         <Link
-                          to={`/tours/${tour.id}`}
+                          to={`/app/tours/${tour.id}`}
                           aria-label="Voir détails"
                           className="text-eco-green hover:text-emerald-600 inline-flex"
                         >
