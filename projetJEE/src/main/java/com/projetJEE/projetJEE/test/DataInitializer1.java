@@ -83,11 +83,38 @@ public class DataInitializer1 implements CommandLineRunner {
             // Si tu as une entité VehiculeRepository, tu peux l'utiliser comme ceci :
             // VehiculeRepository vehiculeRepository;
             
-            Vehicule v1 = new Vehicule( 1001, 300, true);
-            Vehicule v2 = new Vehicule( 1002, 250, true);
-            Vehicule v3 = new Vehicule("v3", 1003, 400, true);
-            Vehicule v4 = new Vehicule("v4", 1004, 350, true);
-            Vehicule v5 = new Vehicule("v5", 1005, 280, true);
+            Vehicule v1 = Vehicule.builder()
+                .matricule(1001L)
+                .capaciteMax(300)
+                .disponibilite(true)
+                .build();
+            
+            Vehicule v2 = Vehicule.builder()
+                .matricule(1002L)
+                .capaciteMax(250)
+                .disponibilite(true)
+                .build();
+                
+            Vehicule v3 = Vehicule.builder()
+                .id("v3")
+                .matricule(1003L)
+                .capaciteMax(400)
+                .disponibilite(true)
+                .build();
+                
+            Vehicule v4 = Vehicule.builder()
+                .id("v4")
+                .matricule(1004L)
+                .capaciteMax(350)
+                .disponibilite(true)
+                .build();
+                
+            Vehicule v5 = Vehicule.builder()
+                .id("v5")
+                .matricule(1005L)
+                .capaciteMax(280)
+                .disponibilite(true)
+                .build();
 
             vehiculeRepository.save(v1);
             vehiculeRepository.save(v2);

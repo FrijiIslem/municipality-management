@@ -275,12 +275,6 @@ public class TourneeServiceImpl implements TourneeService {
                 .orElse(0.0);
     }
 
-    @Override
-    public List<TourneeDto> getTourneesByAgent(String agentId) {
-        return tourneeRepository.findByAgentChauffeurId(agentId).stream()
-                .map(tourneeMapper::toDTO)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional

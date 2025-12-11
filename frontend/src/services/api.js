@@ -311,36 +311,7 @@ export const incidentAPI = {
     throw lastError
   },
   updateStatus: async (id, statut) => {
-    const attempts = [
-      () => api.put('/Incidents/updateStatut', null, { params: { id, statut } }),
-      () => api.post('/Incidents/updateStatut', null, { params: { id, statut } }),
-      () => api.put('/Incidents/updateStatus', null, { params: { id, statut } }),
-      () => api.post('/Incidents/updateStatus', null, { params: { id, statut } }),
-      () => api.put('/Incidents/modifierStatut', null, { params: { id, statut } }),
-      () => api.post('/Incidents/modifierStatut', null, { params: { id, statut } }),
-      () => api.put(`/Incidents/${id}/statut`, null, { params: { statut } }),
-      () => api.put(`/Incidents/${id}/status`, null, { params: { statut } }),
-      () => api.put(`/Incidents/${id}`, { statut }),
-      // lowercase variants
-      () => api.put('/incidents/updateStatut', null, { params: { id, statut } }),
-      () => api.post('/incidents/updateStatut', null, { params: { id, statut } }),
-      () => api.put('/incidents/updateStatus', null, { params: { id, statut } }),
-      () => api.post('/incidents/updateStatus', null, { params: { id, statut } }),
-      () => api.put('/incidents/modifierStatut', null, { params: { id, statut } }),
-      () => api.post('/incidents/modifierStatut', null, { params: { id, statut } }),
-      () => api.put(`/incidents/${id}/statut`, null, { params: { statut } }),
-      () => api.put(`/incidents/${id}/status`, null, { params: { statut } }),
-      () => api.put(`/incidents/${id}`, { statut }),
-    ]
-    let lastError
-    for (const attempt of attempts) {
-      try {
-        return await attempt()
-      } catch (e) {
-        lastError = e
-      }
-    }
-    throw lastError
+    return api.put(`/Incidents/${id}/statut`, null, { params: { statut } })
   },
 }
 

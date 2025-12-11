@@ -67,7 +67,8 @@ public class IncidentServiceImpl implements IncidentServiceInterface {
 
     @Override
     public Incident getIncidentById(String id) {
-        return null; // non utilisé pour l'instant
+        return incidentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Incident introuvable pour l'id: " + id));
     }
 
     @Override
@@ -99,6 +100,17 @@ public class IncidentServiceImpl implements IncidentServiceInterface {
         incident.setStatut(Incident.StatutIncident.EN_ATTENTE);
 
         // Sauvegarde MongoDB
+        return incidentRepository.save(incident);
+    }
+
+    @Override
+    public Incident updateStatut(String id, String statut) {
+        Incident incident = getIncidentById(id);
+        try {
+            incident.setStatut(StatutIncident.valueOf(statut.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Statut inconnu : " + statut);
+        }
         return incidentRepository.save(incident);
     }
 

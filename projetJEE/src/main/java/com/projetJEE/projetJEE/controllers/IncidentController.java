@@ -56,5 +56,13 @@ public class IncidentController {
         return incidentService.creeIncident(dto);
     }
 
+    // Mettre à jour le statut d'un incident
+    @PutMapping("/{id}/statut")
+    public Incident updateStatut(
+            @PathVariable String id,
+            @RequestParam String statut
+    ) {
+        return incidentService.updateStatut(id, statut);
+    }
 
 }

@@ -97,7 +97,7 @@ const AdminDashboard = () => {
     // 4. Incidents par statut
     const incidentStats = {
       EN_ATTENTE: incidents.filter(i => i.statut === 'EN_ATTENTE').length,
-      EN_COURS: incidents.filter(i => i.statut === 'EN_COURS').length,
+      EN_COURS: incidents.filter(i => i.statut === 'EN_COURS' || i.statut === 'SEEN').length,
       FIXEE: incidents.filter(i => i.statut === 'FIXEE').length,
     }
 

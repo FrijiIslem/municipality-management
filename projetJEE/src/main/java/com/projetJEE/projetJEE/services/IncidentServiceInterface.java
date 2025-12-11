@@ -18,5 +18,6 @@ public interface IncidentServiceInterface {
 	    List<Incident> getAllIncidents();
 		List<Incident> getIncidentsByDayOrHour(LocalDate localDate, Integer hour);
 	    int countIncidentsByCategorie(String categorie);   
+	    Incident updateStatut(String id, String statut);
 
 }
