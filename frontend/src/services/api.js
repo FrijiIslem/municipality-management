@@ -105,6 +105,8 @@ export const tourAPI = {
   planifyAutomatic: () => api.post('/tournees/planifier-automatique'),
   validate: (id) => api.put(`/tournees/${id}/valider`),
   release: (id) => api.put(`/tournees/${id}/liberer`),
+  start: (id) => api.put(`/tournees/${id}/start`),
+  complete: (id) => api.put(`/tournees/${id}/complete`),
 }
 
 // Container API

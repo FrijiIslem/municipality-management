@@ -23,6 +23,15 @@ public interface TourneeService {
     List<TourneeDto> getTourneesByAgent(String agentId);
     Double getDureeMoyenneTournees();
     
-
+    /**
+     * Démarre une tournée (appelé par l'agent)
+     * Met l'état à ENCOURS et enregistre la date de début
+     */
+    TourneeDto demarrerTournee(String id);
     
+    /**
+     * Termine une tournée (appelé par l'agent)
+     * Met l'état à TERMINEE, enregistre la date de fin et libère les ressources
+     */
+    TourneeDto terminerTournee(String id);
 }

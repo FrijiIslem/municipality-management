@@ -21,10 +21,17 @@ const TourDetail = () => {
     { enabled: !!id }
   )
 
-  const { data: route = [] } = useQuery(
+  const { data: route = [], error: routeError, isLoading: routeLoading } = useQuery(
     ['tour-route', id],
     () => tourAPI.getOptimalRoute(id),
-    { enabled: !!id && tour?.etat === 'EN_COURS' }
+    { 
+      enabled: !!id && !!tour, // Toujours récupérer la route si la tournée existe
+      retry: 1, // Ne réessayer qu'une fois
+      onError: (error) => {
+        console.warn('Erreur lors de la récupération de la route détaillée:', error);
+        // Ne pas afficher d'erreur à l'utilisateur, on utilisera l'itinéraire de fallback
+      }
+    }
   )
 
   const startMutation = useMutation(
@@ -33,10 +40,12 @@ const TourDetail = () => {
       onSuccess: () => {
         toast.success('Tournée démarrée avec succès')
         queryClient.invalidateQueries(['tour', id])
+        queryClient.invalidateQueries(['tour-route', id])
         queryClient.invalidateQueries('tours')
       },
-      onError: () => {
-        toast.error('Erreur lors du démarrage de la tournée')
+      onError: (error) => {
+        const message = error?.response?.data?.message || error?.message || 'Erreur lors du démarrage de la tournée'
+        toast.error(message)
       },
     }
   )
@@ -45,13 +54,14 @@ const TourDetail = () => {
     () => tourAPI.complete(id),
     {
       onSuccess: () => {
-        toast.success('Tournée terminée avec succès')
+        toast.success('Tournée terminée avec succès. Les ressources ont été libérées.')
         queryClient.invalidateQueries(['tour', id])
         queryClient.invalidateQueries('tours')
         navigate('/tours')
       },
-      onError: () => {
-        toast.error('Erreur lors de la finalisation de la tournée')
+      onError: (error) => {
+        const message = error?.response?.data?.message || error?.message || 'Erreur lors de la finalisation de la tournée'
+        toast.error(message)
       },
     }
   )
@@ -72,9 +82,9 @@ const TourDetail = () => {
     )
   }
 
-  const canStart = tour.etat === 'ACCEPTEE'
-  const canComplete = tour.etat === 'EN_COURS'
-  const isActive = tour.etat === 'EN_COURS'
+  const canStart = tour.etat === 'VALIDEE' || tour.etat === 'ACCEPTEE'
+  const canComplete = tour.etat === 'EN_COURS' || tour.etat === 'ENCOURS'
+  const isActive = tour.etat === 'EN_COURS' || tour.etat === 'ENCOURS'
 
   // Calculer le centre de la carte depuis les conteneurs ou utiliser Tunis par défaut
   const getMapCenter = () => {

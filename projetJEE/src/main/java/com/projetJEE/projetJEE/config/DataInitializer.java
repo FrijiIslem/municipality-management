@@ -5,10 +5,13 @@ import com.projetJEE.projetJEE.entities.enums.*;
 import com.projetJEE.projetJEE.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,10 +24,30 @@ public class DataInitializer implements CommandLineRunner {
     private final VehiculeRepository vehiculeRepository;
     private final TourneeRepository tourneeRepository;
     private final NotificationRepository notificationRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public void run(String... args) throws Exception {
         System.out.println("🔍 Démarrage de l'initialisation des données...");
+        
+        // Créer un compte admin par défaut s'il n'existe pas
+        List<Utilisateur> admins = utilisateurRepository.findByRole(Utilisateur.RoleUtilisateur.ADMIN);
+        if (admins.isEmpty()) {
+            Utilisateur admin = new Utilisateur();
+            admin.setEmail("admin@urbanova.com");
+            admin.setPassword(passwordEncoder.encode("admin123")); // Mot de passe hashé avec BCrypt
+            admin.setNom("Admin");
+            admin.setPrenom("Urbanova");
+            admin.setRole(Utilisateur.RoleUtilisateur.ADMIN);
+            utilisateurRepository.save(admin);
+            System.out.println("✅ Compte admin créé :");
+            System.out.println("   📧 Email: admin@urbanova.com");
+            System.out.println("   🔑 Mot de passe: admin123");
+        } else {
+            System.out.println("ℹ️ Un compte admin existe déjà.");
+        }
+        
         // Initialiser les conteneurs s'il n'y en a pas
         if (conteneurRepository.count() == 0) {
             Conteneur conteneur1 = new Conteneur();
@@ -84,6 +107,6 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("   - Nombre de notifications : " + notificationRepository.count());
             System.out.println("   - Nombre de tournées : " + tourneeRepository.count());
         }
-        }
     }
+}
 

@@ -18,16 +18,19 @@ const Login = () => {
     try {
       const response = await authAPI.login(email, password)
 
-      if (response) {
-        // Try to get user info - for now, we'll determine role from email or use a default
-        // In a real app, the backend should return user info with role
+      if (response && response.id) {
+        // Le backend retourne maintenant les vraies données utilisateur
         const userData = {
-          email,
-          role: email.includes('admin') ? 'ADMIN' : email.includes('citoyen') ? 'CITOYEN' : 'AGENT',
+          id: response.id,
+          email: response.email,
+          nom: response.nom,
+          prenom: response.prenom,
+          numeroTel: response.numeroTel,
+          role: response.role || 'AGENT',
         }
         
         login(userData, null)
-        toast.success('Connexion réussie')
+        toast.success(`Connexion réussie, bienvenue ${userData.prenom || userData.email}!`)
         
         // Navigate based on role
         if (userData.role === 'ADMIN') {
@@ -37,9 +40,12 @@ const Login = () => {
         } else {
           navigate('/')
         }
+      } else {
+        toast.error('Email ou mot de passe incorrect')
       }
     } catch (error) {
-      toast.error('Email ou mot de passe incorrect')
+      const errorMessage = error?.response?.data?.error || error?.message || 'Email ou mot de passe incorrect'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }

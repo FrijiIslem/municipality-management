@@ -58,6 +58,15 @@ public class ConteneurController {
         return ResponseEntity.ok(updated);
     }
 
+    // Marquer un conteneur comme vide (endpoint simplifié pour les agents)
+    @Operation(summary = "Marquer un conteneur comme vide")
+    @PutMapping("/{id}/empty")
+    public ResponseEntity<ConteneurDTO> markEmpty(@PathVariable String id) {
+        ConteneurDTO conteneur = conteneurService.getConteneurById(id);
+        ConteneurDTO updated = conteneurService.viderConteneur(id, conteneur);
+        return ResponseEntity.ok(updated);
+    }
+
     // Ajouter un déchet dans un conteneur
     @PostMapping("/{id}/dechets")
     @Operation(summary = "Ajouter un déchet dans un conteneur")

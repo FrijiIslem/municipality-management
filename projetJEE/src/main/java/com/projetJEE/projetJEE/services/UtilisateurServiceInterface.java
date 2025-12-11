@@ -11,7 +11,7 @@ import com.projetJEE.projetJEE.entities.Incident;
 import com.projetJEE.projetJEE.entities.Utilisateur;
 
 public interface UtilisateurServiceInterface {
-    boolean authentifier(String email, String password);
+    Utilisateur authentifier(String email, String password);
 
 	 // ----- Citoyen -----
     Citoyen ajouterCitoyen(Citoyen citoyen);
@@ -34,6 +34,9 @@ public interface UtilisateurServiceInterface {
 
 	List<Utilisateur> getAgentsByTacheEtDisponibilite(TypeTache tache, Boolean dispo);
 	public List<Agent> getAgentsDisponiblesParTache(Agent.TypeTache tache);
+	
+	// Récupérer un utilisateur par email
+	List<Utilisateur> getUtilisateurByEmail(String email);
 	
 }
 

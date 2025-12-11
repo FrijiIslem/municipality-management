@@ -4,23 +4,54 @@ import { toast } from 'react-hot-toast'
 import { Trash2, CheckCircle } from 'lucide-react'
 
 const getFillStateColor = (etat) => {
+  if (!etat) return 'bg-green-100 text-green-800';
+  const key = etat.toLowerCase();
   const colors = {
+    vide: 'bg-green-100 text-green-800',
     VIDE: 'bg-green-100 text-green-800',
+    faible: 'bg-yellow-100 text-yellow-800',
     FAIBLE: 'bg-yellow-100 text-yellow-800',
+    moyen: 'bg-orange-100 text-orange-800',
     MOYEN: 'bg-orange-100 text-orange-800',
+    saturee: 'bg-red-100 text-red-800',
+    SATUREE: 'bg-red-100 text-red-800',
     PLEIN: 'bg-red-100 text-red-800',
   }
-  return colors[etat] || colors.VIDE
+  return colors[key] || colors[etat] || colors.vide
 }
 
 const getFillStateLabel = (etat) => {
+  if (!etat) return 'Vide';
+  const key = etat.toLowerCase();
   const labels = {
+    vide: 'Vide',
     VIDE: 'Vide',
+    faible: 'Faible',
     FAIBLE: 'Faible',
+    moyen: 'Moyen',
     MOYEN: 'Moyen',
+    saturee: 'Saturé',
+    SATUREE: 'Saturé',
     PLEIN: 'Plein',
   }
-  return labels[etat] || 'Inconnu'
+  return labels[key] || labels[etat] || 'Inconnu'
+}
+
+const getFillStateIcon = (etat) => {
+  if (!etat) return '🗑️';
+  const key = etat.toLowerCase();
+  const icons = {
+    vide: '🗑️',
+    VIDE: '🗑️',
+    faible: '⚠️',
+    FAIBLE: '⚠️',
+    moyen: '🟠',
+    MOYEN: '🟠',
+    saturee: '🔴',
+    SATUREE: '🔴',
+    PLEIN: '🔴',
+  }
+  return icons[key] || icons[etat] || '🗑️'
 }
 
 const ContainerList = ({ containers = [], tourId, isActive = false }) => {
@@ -31,8 +62,11 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
     {
       onSuccess: () => {
         toast.success('Conteneur marqué comme vide')
+        // Invalider toutes les requêtes liées pour mettre à jour la carte et la liste
         queryClient.invalidateQueries(['tour', tourId])
+        queryClient.invalidateQueries(['tour-route', tourId])
         queryClient.invalidateQueries('containers')
+        queryClient.invalidateQueries('tours')
       },
       onError: () => {
         toast.error('Erreur lors de la mise à jour')
@@ -63,27 +97,33 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-light-gray rounded-lg flex items-center justify-center">
-                      <Trash2 className="w-5 h-5 text-anthracite" />
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl">
+                      {getFillStateIcon(container?.etatRemplissage)}
                     </div>
                     <div>
                       <p className="font-medium text-anthracite">
                         Conteneur #{container.id}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {container?.localisation?.adresse || 'Adresse non disponible'}
+                        {container?.localisation?.adresse || 
+                         (typeof container?.localisation === 'string' 
+                           ? JSON.parse(container.localisation)?.adresse || 'Adresse non disponible'
+                           : 'Adresse non disponible')}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`badge ${getFillStateColor(container?.etatRemplissage)}`}
+                    className={`badge ${getFillStateColor(container?.etatRemplissage)} flex items-center gap-1`}
                   >
+                    {getFillStateIcon(container?.etatRemplissage)}
                     {getFillStateLabel(container?.etatRemplissage)}
                   </span>
                 </div>
 
-                {isActive && container?.etatRemplissage !== 'VIDE' && (
+                {isActive && container?.etatRemplissage && 
+                 container.etatRemplissage.toLowerCase() !== 'vide' && 
+                 container.etatRemplissage !== 'VIDE' && (
                   <button
                     onClick={() =>
                       container?.id && markEmptyMutation.mutate(container.id)

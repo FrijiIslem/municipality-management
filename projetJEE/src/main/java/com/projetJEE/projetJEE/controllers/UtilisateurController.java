@@ -2,18 +2,20 @@ package com.projetJEE.projetJEE.controllers;
 import java.util.List;		
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetJEE.projetJEE.dto.AgentDTO;
 import com.projetJEE.projetJEE.dto.CitoyenDTO;
+import com.projetJEE.projetJEE.dto.UtilisateurDTO;
 import com.projetJEE.projetJEE.entities.Agent;
 import com.projetJEE.projetJEE.entities.Citoyen;
 import com.projetJEE.projetJEE.entities.Incident;
+import com.projetJEE.projetJEE.entities.Utilisateur;
+import com.projetJEE.projetJEE.mapper.UtilisateurMapper;
 import com.projetJEE.projetJEE.services.UtilisateurServiceInterface;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,8 +27,37 @@ public class UtilisateurController {
 
     // ------------------- Authentification -------------------
     @PostMapping("/auth")
-    public boolean authentifier(@RequestParam String email, @RequestParam String password) {
-        return utilisateurService.authentifier(email, password);
+    public ResponseEntity<?> authentifier(@RequestParam String email, @RequestParam String password) {
+        Utilisateur user = utilisateurService.authentifier(email, password);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Email ou mot de passe incorrect"));
+        }
+        
+        // Convertir en DTO (sans le mot de passe) en utilisant le mapper
+        UtilisateurDTO userDTO = UtilisateurMapper.toDTO(user);
+        
+        return ResponseEntity.ok(userDTO);
+    }
+    
+    // ------------------- Récupérer l'utilisateur actuel -------------------
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestParam(required = false) String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Email requis"));
+        }
+        
+        List<Utilisateur> matches = utilisateurService.getUtilisateurByEmail(email);
+        if (matches.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Utilisateur non trouvé"));
+        }
+        
+        Utilisateur user = matches.get(0);
+        UtilisateurDTO userDTO = UtilisateurMapper.toDTO(user);
+        
+        return ResponseEntity.ok(userDTO);
     }
     //------------------------Ajouter----------------
     @PostMapping("/citoyens")

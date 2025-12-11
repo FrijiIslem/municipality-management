@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   LayoutDashboard, 
   Route, 
@@ -6,6 +6,7 @@ import {
   Bell,
   LogOut 
 } from 'lucide-react'
+import useAuthStore from '../../store/authStore'
 
 const menuItems = [
   { path: '/', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -15,6 +16,14 @@ const menuItems = [
 ]
 
 const Sidebar = () => {
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white shadow-card">
       <nav className="p-4">
@@ -43,10 +52,7 @@ const Sidebar = () => {
         
         <div className="mt-8 pt-8 border-t border-gray-200">
           <button
-            onClick={() => {
-              localStorage.removeItem('token')
-              window.location.href = '/login'
-            }}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 w-full transition-colors"
           >
             <LogOut className="w-5 h-5" />

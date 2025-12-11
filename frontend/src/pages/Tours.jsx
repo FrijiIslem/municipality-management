@@ -7,8 +7,10 @@ import { fr } from 'date-fns/locale'
 
 const statusConfig = {
   PLANIFIEE: { label: 'Planifiée', icon: Clock, color: 'badge-info' },
+  VALIDEE: { label: 'Validée', icon: CheckCircle, color: 'badge-warning' },
   ACCEPTEE: { label: 'Acceptée', icon: CheckCircle, color: 'badge-warning' },
   EN_COURS: { label: 'En cours', icon: Route, color: 'badge-success' },
+  ENCOURS: { label: 'En cours', icon: Route, color: 'badge-success' },
   TERMINEE: { label: 'Terminée', icon: CheckCircle, color: 'badge-success' },
   ANNULEE: { label: 'Annulée', icon: XCircle, color: 'badge-danger' },
 }

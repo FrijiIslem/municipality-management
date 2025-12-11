@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.projetJEE.projetJEE.dto.AgentDTO;
 import com.projetJEE.projetJEE.dto.CitoyenDTO;
@@ -33,17 +35,47 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 
     private final UtilisateurRepository utilisateurRepository;
     private final IncidentRepository incidentRepository;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 	@Override
-	public boolean authentifier(String email, String password) {
+	public Utilisateur authentifier(String email, String password) {
 	    List<Utilisateur> matches = utilisateurRepository.findAllByEmail(email);
 	    if (matches.isEmpty()) {
-	        return false;
+	        logger.warn("Tentative de connexion avec un email inexistant: {}", email);
+	        return null;
 	    }
 	    if (matches.size() > 1) {
 	        logger.warn("Plusieurs utilisateurs partagent le même email {}. Vérifiez les données MongoDB.", email);
 	    }
-	    return matches.stream().anyMatch(u -> Objects.equals(u.getPassword(), password));
+	    
+	    // Vérifier le mot de passe pour chaque utilisateur trouvé
+	    for (Utilisateur user : matches) {
+	        // Si le mot de passe est déjà hashé (commence par $2a$ ou $2b$), utiliser BCrypt
+	        // Sinon, comparer en clair (pour la migration des anciens utilisateurs)
+	        boolean passwordMatches = false;
+	        
+	        if (user.getPassword() != null && (user.getPassword().startsWith("$2a$") || user.getPassword().startsWith("$2b$"))) {
+	            // Mot de passe hashé avec BCrypt
+	            passwordMatches = passwordEncoder.matches(password, user.getPassword());
+	        } else {
+	            // Ancien mot de passe en clair (pour la migration)
+	            passwordMatches = Objects.equals(user.getPassword(), password);
+	            // Si le mot de passe correspond, le hasher pour la prochaine fois
+	            if (passwordMatches) {
+	                user.setPassword(passwordEncoder.encode(password));
+	                utilisateurRepository.save(user);
+	                logger.info("Mot de passe migré vers BCrypt pour l'utilisateur: {}", email);
+	            }
+	        }
+	        
+	        if (passwordMatches) {
+	            logger.info("Authentification réussie pour: {} (rôle: {})", email, user.getRole());
+	            return user;
+	        }
+	    }
+	    
+	    logger.warn("Tentative de connexion avec un mot de passe incorrect pour: {}", email);
+	    return null;
 	}
 
 	@Override
@@ -78,7 +110,8 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
         citoyenToSave.setNom(citoyen.getNom().trim());
         citoyenToSave.setPrenom(citoyen.getPrenom().trim());
         citoyenToSave.setEmail(citoyen.getEmail().trim());
-        citoyenToSave.setPassword(citoyen.getPassword());
+        // Hasher le mot de passe avec BCrypt
+        citoyenToSave.setPassword(passwordEncoder.encode(citoyen.getPassword()));
         citoyenToSave.setRole(RoleUtilisateur.CITOYEN);
         
         // Champs optionnels
@@ -113,29 +146,37 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		return 0;
 	}
 
-	@Override
-	public Citoyen modifierCitoyen(Citoyen citoyen, String ancienPassword) {
-	    Citoyen existing = (Citoyen) utilisateurRepository.findById(citoyen.getId())
-	            .orElseThrow(() -> new RuntimeException("❌ Citoyen non trouvé avec l'ID : " + citoyen.getId()));
+    @Override
+    public Citoyen modifierCitoyen(Citoyen citoyen, String ancienPassword) {
+        Citoyen existing = (Citoyen) utilisateurRepository.findById(citoyen.getId())
+                .orElseThrow(() -> new RuntimeException("❌ Citoyen non trouvé avec l'ID : " + citoyen.getId()));
 
-	    //  l'ancien
-	    if (!existing.getPassword().equals(ancienPassword)) {
-	        throw new RuntimeException("❌ Ancien mot de passe incorrect !");
-	    }
+        // Vérifier l'ancien mot de passe (support BCrypt et clair pour migration)
+        boolean passwordMatches = false;
+        if (existing.getPassword() != null && (existing.getPassword().startsWith("$2a$") || existing.getPassword().startsWith("$2b$"))) {
+            passwordMatches = passwordEncoder.matches(ancienPassword, existing.getPassword());
+        } else {
+            passwordMatches = existing.getPassword().equals(ancienPassword);
+        }
+        
+        if (!passwordMatches) {
+            throw new RuntimeException("❌ Ancien mot de passe incorrect !");
+        }
 
-	    existing.setNom(citoyen.getNom() != null ? citoyen.getNom() : existing.getNom());
-	    existing.setPrenom(citoyen.getPrenom() != null ? citoyen.getPrenom() : existing.getPrenom());
-	    existing.setEmail(citoyen.getEmail() != null ? citoyen.getEmail() : existing.getEmail());
-	    existing.setNumeroTel(citoyen.getNumeroTel() != null ? citoyen.getNumeroTel() : existing.getNumeroTel());
-	    existing.setAdresse(citoyen.getAdresse() != null ? citoyen.getAdresse() : existing.getAdresse());
+        existing.setNom(citoyen.getNom() != null ? citoyen.getNom() : existing.getNom());
+        existing.setPrenom(citoyen.getPrenom() != null ? citoyen.getPrenom() : existing.getPrenom());
+        existing.setEmail(citoyen.getEmail() != null ? citoyen.getEmail() : existing.getEmail());
+        existing.setNumeroTel(citoyen.getNumeroTel() != null ? citoyen.getNumeroTel() : existing.getNumeroTel());
+        existing.setAdresse(citoyen.getAdresse() != null ? citoyen.getAdresse() : existing.getAdresse());
 
-	    if (citoyen.getPassword() != null && !citoyen.getPassword().isEmpty()) {
-	        existing.setPassword(citoyen.getPassword());
-	    }
+        if (citoyen.getPassword() != null && !citoyen.getPassword().isEmpty()) {
+            // Hasher le nouveau mot de passe avec BCrypt
+            existing.setPassword(passwordEncoder.encode(citoyen.getPassword()));
+        }
 
-	    // save 
-	    return (Citoyen) utilisateurRepository.save(existing);
-	}
+        // save 
+        return (Citoyen) utilisateurRepository.save(existing);
+    }
 
 	@Override
 	public boolean supprimerCitoyen(String id) {
@@ -188,7 +229,8 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
         agentToSave.setNom(agent.getNom().trim());
         agentToSave.setPrenom(agent.getPrenom().trim());
         agentToSave.setEmail(agent.getEmail().trim());
-        agentToSave.setPassword(agent.getPassword());
+        // Hasher le mot de passe avec BCrypt
+        agentToSave.setPassword(passwordEncoder.encode(agent.getPassword()));
         agentToSave.setRole(RoleUtilisateur.AGENT);
         
         // Champs optionnels
@@ -342,10 +384,15 @@ public List<Agent> getAgentsDisponiblesParTache(Agent.TypeTache tache) {
     List<Utilisateur> utilisateurs = utilisateurRepository.findByRole(RoleUtilisateur.AGENT);
 
     // Filtrer uniquement les Agents correspondant à la tâche et disponibles
-    return utilisateurs.stream()
+        return utilisateurs.stream()
             .filter(u -> u instanceof Agent)           // s'assurer que c'est un Agent
             .map(u -> (Agent) u)                        // cast en Agent
             .filter(a -> a.getTache() == tache && Boolean.TRUE.equals(a.getDisponibilite()))
             .collect(Collectors.toList());
 }
+
+    @Override
+    public List<Utilisateur> getUtilisateurByEmail(String email) {
+        return utilisateurRepository.findAllByEmail(email);
+    }
 }

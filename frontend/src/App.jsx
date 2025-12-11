@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout/Layout'
 import AdminLayout from './components/Layout/AdminLayout'
 import CitoyenLayout from './components/Layout/CitoyenLayout'
+import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import Tours from './pages/Tours'
 import TourDetail from './pages/TourDetail'
@@ -35,7 +36,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       
       {/* Agent routes */}
-      <Route path="/" element={<Layout />}>
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="tours" element={<Tours />} />
         <Route path="tours/:id" element={<TourDetail />} />
@@ -44,7 +45,7 @@ function App() {
       </Route>
 
       {/* Admin routes */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="tours" element={<AdminTours />} />
@@ -56,7 +57,7 @@ function App() {
       </Route>
 
       {/* Citoyen routes */}
-      <Route path="/citoyen" element={<CitoyenLayout />}>
+      <Route path="/citoyen" element={<ProtectedRoute requiredRole="CITOYEN"><CitoyenLayout /></ProtectedRoute>}>
         <Route index element={<CitoyenDashboard />} />
         <Route path="incidents" element={<CitoyenIncidents />} />
         <Route path="containers" element={<CitoyenContainers />} />

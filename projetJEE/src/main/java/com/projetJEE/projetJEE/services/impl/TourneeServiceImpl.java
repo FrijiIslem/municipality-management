@@ -10,6 +10,9 @@ import com.projetJEE.projetJEE.repository.TourneeRepository;
 import com.projetJEE.projetJEE.repository.VehiculeRepository;
 import com.projetJEE.projetJEE.repository.UtilisateurRepository;
 import com.projetJEE.projetJEE.services.TourneeService;
+import com.projetJEE.projetJEE.services.NotificationService;
+import com.projetJEE.projetJEE.dto.NotificationDto;
+import com.projetJEE.projetJEE.entities.enums.TypeNotification;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,9 @@ public class TourneeServiceImpl implements TourneeService {
 
     @Autowired
     private TourneeMapper tourneeMapper;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public List<TourneeDto> getAllTournees() {
@@ -91,9 +97,54 @@ public class TourneeServiceImpl implements TourneeService {
     public TourneeDto validerTournee(String id) {
         Tournee tournee = tourneeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
-        tournee.setEtat(EtatTournee.ENCOURS);
+        
+        // Changer l'état à VALIDEE
+        tournee.setEtat(EtatTournee.VALIDEE);
         Tournee saved = tourneeRepository.save(tournee);
+        
+        // Envoyer des notifications aux agents assignés
+        sendValidationNotificationsToAgents(saved);
+        
         return tourneeMapper.toDTO(saved);
+    }
+
+    /**
+     * Envoie des notifications aux agents lorsqu'une tournée est validée
+     */
+    private void sendValidationNotificationsToAgents(Tournee tournee) {
+        try {
+            String message = String.format(
+                "La tournée #%s a été validée. Vous pouvez maintenant la démarrer.",
+                tournee.getId()
+            );
+            
+            // Notifier le chauffeur
+            if (tournee.getAgentChauffeur() != null) {
+                NotificationDto notification = NotificationDto.builder()
+                    .dateEnvoi(LocalDateTime.now())
+                    .destination(tournee.getAgentChauffeur().getId())
+                    .message(message)
+                    .type(TypeNotification.REMINDER)
+                    .build();
+                notificationService.createNotification(notification);
+            }
+            
+            // Notifier les ramasseurs
+            if (tournee.getAgentRamasseurs() != null) {
+                for (Agent ramasseur : tournee.getAgentRamasseurs()) {
+                    NotificationDto notification = NotificationDto.builder()
+                        .dateEnvoi(LocalDateTime.now())
+                        .destination(ramasseur.getId())
+                        .message(message)
+                        .type(TypeNotification.REMINDER)
+                        .build();
+                    notificationService.createNotification(notification);
+                }
+            }
+        } catch (Exception e) {
+            // Logger l'erreur mais ne pas faire échouer la validation
+            System.err.println("Erreur lors de l'envoi des notifications: " + e.getMessage());
+        }
     }
 
     @Override
@@ -230,5 +281,61 @@ public class TourneeServiceImpl implements TourneeService {
         return tourneeRepository.findByAgentChauffeurId(agentId).stream()
                 .map(tourneeMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TourneeDto demarrerTournee(String id) {
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+        
+        // Vérifier que la tournée est validée
+        if (tournee.getEtat() != EtatTournee.VALIDEE) {
+            throw new IllegalStateException("La tournée doit être validée avant d'être démarrée. État actuel: " + tournee.getEtat());
+        }
+        
+        // Changer l'état à ENCOURS et enregistrer la date de début
+        tournee.setEtat(EtatTournee.ENCOURS);
+        tournee.setDateDebut(LocalDateTime.now());
+        
+        Tournee saved = tourneeRepository.save(tournee);
+        return tourneeMapper.toDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public TourneeDto terminerTournee(String id) {
+        Tournee tournee = tourneeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tournee not found with id: " + id));
+        
+        // Vérifier que la tournée est en cours
+        if (tournee.getEtat() != EtatTournee.ENCOURS) {
+            throw new IllegalStateException("Seules les tournées en cours peuvent être terminées. État actuel: " + tournee.getEtat());
+        }
+        
+        // Changer l'état à TERMINEE et enregistrer la date de fin
+        tournee.setEtat(EtatTournee.TERMINEE);
+        tournee.setDateFin(LocalDateTime.now());
+
+        // Libérer les ressources (remettre les agents et véhicule en disponible)
+        if (tournee.getAgentChauffeur() != null) {
+            tournee.getAgentChauffeur().setDisponibilite(true);
+            utilisateurRepository.save(tournee.getAgentChauffeur());
+        }
+
+        if (tournee.getAgentRamasseurs() != null) {
+            for (Agent ramasseur : tournee.getAgentRamasseurs()) {
+                ramasseur.setDisponibilite(true);
+                utilisateurRepository.save(ramasseur);
+            }
+        }
+
+        if (tournee.getVehicule() != null) {
+            tournee.getVehicule().setDisponibilite(true);
+            vehiculeRepository.save(tournee.getVehicule());
+        }
+
+        Tournee saved = tourneeRepository.save(tournee);
+        return tourneeMapper.toDTO(saved);
     }
 }
