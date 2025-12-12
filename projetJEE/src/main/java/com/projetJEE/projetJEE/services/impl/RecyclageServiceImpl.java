@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.projetJEE.projetJEE.dto.RecyclageDTO;
 import com.projetJEE.projetJEE.entities.Recyclage;
 import com.projetJEE.projetJEE.entities.enums.TypeDechets;
+import com.projetJEE.projetJEE.exceptions.ResourceNotFoundException;
 import com.projetJEE.projetJEE.mapper.RecyclageMapper;
 import com.projetJEE.projetJEE.repository.RecyclageRepository;
 import com.projetJEE.projetJEE.services.RecyclageService;

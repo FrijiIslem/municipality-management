@@ -1,21 +1,21 @@
 package com.projetJEE.projetJEE.entities;
 
 import com.projetJEE.projetJEE.entities.enums.TypeDechets;
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-
-import java.util.Date;
-
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection = "dechets")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Dechets {
-	    private String id;
-	    private TypeDechets type;
-	    private boolean ramasse;
+    @Id
+    private String id;
+    private TypeDechets type;
+    private boolean ramasse;
 }

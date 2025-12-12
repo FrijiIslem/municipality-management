@@ -7,11 +7,9 @@ import com.projetJEE.projetJEE.entities.enums.CouleurStatut;
 
 import java.util.List;
 
-
 public interface ConteneurService {
 
     ConteneurDTO createConteneur(ConteneurDTO conteneurDTO);
-
 
     void deleteConteneur(String id);
 
@@ -19,19 +17,13 @@ public interface ConteneurService {
 
     List<ConteneurDTO> getAllConteneurs();
 
-    
     CouleurStatut saturationColor(ConteneurDTO conteneurDTO);
 
-	ConteneurDTO viderConteneur(String id, ConteneurDTO dto);
+    ConteneurDTO viderConteneur(String id, ConteneurDTO dto);
 
+    ConteneurDTO ajouterDechet(String idConteneur, DechetsDTO dto);
 
-	ConteneurDTO ajouterDechet(String idConteneur, DechetsDTO dto);
+    ConteneurDTO updateEtat(String idConteneur);
 
-
-	ConteneurDTO updateEtat(String idConteneur);
-
-
-	ConteneurDTO ajouterCitoyen(String idConteneur, CitoyenDTO dto);
-    
-
+    ConteneurDTO ajouterCitoyen(String idConteneur, CitoyenDTO dto);
 }

@@ -12,16 +12,14 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 @Document(collection = "conteneurs")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Conteneur {
-	@Id
+    @Id
     private String id;
 
     private String localisation;
@@ -29,10 +27,10 @@ public class Conteneur {
     private CouleurStatut couleurStatut;
 
     private EtatRemplissage etatRemplissage;
-    
-    public final static int quantite_max=200;
+
+    public final static int quantite_max = 200;
 
     private List<Dechets> dechets = new ArrayList<>();
-    
+
     private List<Citoyen> citoyens = new ArrayList<>();
 }

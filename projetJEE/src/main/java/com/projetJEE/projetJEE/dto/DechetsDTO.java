@@ -1,6 +1,5 @@
 package com.projetJEE.projetJEE.dto;
 
-
 import com.projetJEE.projetJEE.entities.enums.TypeDechets;
 
 import lombok.AllArgsConstructor;
@@ -14,6 +13,4 @@ public class DechetsDTO {
 
     private String id;
     private TypeDechets type;
-    private boolean ramasse;
 }
-

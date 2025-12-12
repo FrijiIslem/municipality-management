@@ -5,7 +5,7 @@ import com.projetJEE.projetJEE.dto.CitoyenDTO;
 
 public class CitoyenMapper {
 
-    public static  CitoyenDTO toDTO(Citoyen citoyen) {
+    public static CitoyenDTO toDTO(Citoyen citoyen) {
         if (citoyen == null) return null;
 
         return CitoyenDTO.builder()
@@ -19,7 +19,7 @@ public class CitoyenMapper {
                 .build();
     }
 
-    public static  Citoyen toEntity(CitoyenDTO dto) {
+    public static Citoyen toEntity(CitoyenDTO dto) {
         if (dto == null) return null;
 
         Citoyen citoyen = new Citoyen();

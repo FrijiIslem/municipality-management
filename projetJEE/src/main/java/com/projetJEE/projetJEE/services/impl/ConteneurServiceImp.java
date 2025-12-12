@@ -25,9 +25,8 @@ public class ConteneurServiceImp implements ConteneurService {
 
     private final ConteneurRepository conteneurRepository;
     private final ConteneurMapper conteneurMapper;
-    // ------------------------------------------------------------
+
     // 1. CREATE CONTENEUR
-    // ------------------------------------------------------------
     @Override
     public ConteneurDTO createConteneur(ConteneurDTO dto) {
         Conteneur entity = conteneurMapper.toEntity(dto);
@@ -35,28 +34,21 @@ public class ConteneurServiceImp implements ConteneurService {
         return conteneurMapper.toDTO(saved);
     }
 
-    // ------------------------------------------------------------
     // 2. DELETE
-    // ------------------------------------------------------------
     @Override
     public void deleteConteneur(String id) {
         conteneurRepository.deleteById(id);
     }
 
-    // ------------------------------------------------------------
     // 3. GET BY ID
-    // ------------------------------------------------------------
     @Override
     public ConteneurDTO getConteneurById(String id) {
         Conteneur entity = conteneurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé : " + id));
-
         return conteneurMapper.toDTO(entity);
     }
 
-    // ------------------------------------------------------------
     // 4. GET ALL
-    // ------------------------------------------------------------
     @Override
     public List<ConteneurDTO> getAllConteneurs() {
         return conteneurRepository.findAll()
@@ -65,9 +57,7 @@ public class ConteneurServiceImp implements ConteneurService {
                 .collect(Collectors.toList());
     }
 
-    // ------------------------------------------------------------
     // 6. SATURATION COLOR
-    // ------------------------------------------------------------
     @Override
     public CouleurStatut saturationColor(ConteneurDTO dto) {
         EtatRemplissage etat = dto.getEtatRemplissage();
@@ -79,43 +69,28 @@ public class ConteneurServiceImp implements ConteneurService {
         return null;
     }
 
-    // ------------------------------------------------------------
     // 7. VIDER CONTENEUR
-    // ------------------------------------------------------------
     @Override
     public ConteneurDTO viderConteneur(String id, ConteneurDTO dto) {
-
-        // 1. Récupérer le conteneur
         Conteneur cont = conteneurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé"));
 
-        // 2. Marquer tous les déchets comme ramassés
         cont.getDechets().forEach(d -> d.setRamasse(true));
-
-        // 3. Réinitialiser état du conteneur → vide
         cont.setEtatRemplissage(EtatRemplissage.vide);
 
-        // 4. Mettre à jour la couleur automatiquement
         dto.setEtatRemplissage(EtatRemplissage.vide);
         cont.setCouleurStatut(saturationColor(dto));
 
-        // 5. Sauvegarder
         Conteneur saved = conteneurRepository.save(cont);
-
         return conteneurMapper.toDTO(saved);
     }
 
-
-    // ------------------------------------------------------------
-    // 8. Update Etat de Remplissage
-    // ------------------------------------------------------------
+    // 8. UPDATE ETAT DE REMPLISSAGE
     @Override
     public ConteneurDTO updateEtat(String idConteneur) {
-
         Conteneur cont = conteneurRepository.findById(idConteneur)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé : " + idConteneur));
 
-        // ➤ calcul basé sur le nombre de déchets embarqués
         int nbDechets = cont.getDechets().size();
         double taux = (nbDechets / (double) Conteneur.quantite_max) * 100;
 
@@ -125,7 +100,6 @@ public class ConteneurServiceImp implements ConteneurService {
         else etat = EtatRemplissage.saturee;
 
         cont.setEtatRemplissage(etat);
-
         ConteneurDTO tmp = new ConteneurDTO();
         tmp.setEtatRemplissage(etat);
         cont.setCouleurStatut(saturationColor(tmp));
@@ -133,10 +107,10 @@ public class ConteneurServiceImp implements ConteneurService {
         Conteneur saved = conteneurRepository.save(cont);
         return conteneurMapper.toDTO(saved);
     }
-    
-    
-    public ConteneurDTO ajouterDechet(String idConteneur, DechetsDTO dto) {
 
+    // AJOUTER DECHET
+    @Override
+    public ConteneurDTO ajouterDechet(String idConteneur, DechetsDTO dto) {
         Conteneur cont = conteneurRepository.findById(idConteneur)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé"));
 
@@ -146,24 +120,21 @@ public class ConteneurServiceImp implements ConteneurService {
         cont.getDechets().add(d);
 
         Conteneur saved = conteneurRepository.save(cont);
-
         return conteneurMapper.toDTO(saved);
     }
-    
-	public ConteneurDTO ajouterCitoyen(String idConteneur, CitoyenDTO dto) {
 
+    // AJOUTER CITOYEN
+    @Override
+    public ConteneurDTO ajouterCitoyen(String idConteneur, CitoyenDTO dto) {
         Conteneur cont = conteneurRepository.findById(idConteneur)
                 .orElseThrow(() -> new RuntimeException("Conteneur non trouvé"));
 
-		Citoyen citoyen = CitoyenMapper.toEntity(dto);
+        Citoyen citoyen = CitoyenMapper.toEntity(dto);
         citoyen.setId(UUID.randomUUID().toString());
 
         cont.getCitoyens().add(citoyen);
 
         Conteneur saved = conteneurRepository.save(cont);
-
         return conteneurMapper.toDTO(saved);
     }
-
-
 }

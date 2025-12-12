@@ -10,5 +10,4 @@ public class RecyclageDTO {
     private float quantite;
     private float taux;
     private TypeDechets typeDechet;
-    
 }

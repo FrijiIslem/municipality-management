@@ -2,6 +2,7 @@ package com.projetJEE.projetJEE.services.impl;
 
 import com.projetJEE.projetJEE.dto.VehiculeDTO;
 import com.projetJEE.projetJEE.entities.Vehicule;
+import com.projetJEE.projetJEE.exceptions.ResourceNotFoundException;
 import com.projetJEE.projetJEE.repository.VehiculeRepository;
 import com.projetJEE.projetJEE.services.VehiculeService;
 import lombok.RequiredArgsConstructor;
@@ -19,14 +20,34 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public VehiculeDTO createVehicule(VehiculeDTO vehiculeDTO) {
+        System.out.println("=== DEBUG VehiculeServiceImpl.createVehicule ===");
+        System.out.println("DTO reçu: " + vehiculeDTO);
+        
+        // Validation
+        if (vehiculeDTO.getMatricule() == null) {
+            throw new IllegalArgumentException("Le matricule est obligatoire");
+        }
+        if (vehiculeDTO.getCapaciteMax() <= 0) {
+            throw new IllegalArgumentException("La capacité maximale doit être supérieure à 0");
+        }
+        
         Vehicule vehicule = vehiculeMapper.toEntity(vehiculeDTO);
+        System.out.println("Entité créée: " + vehicule);
+        System.out.println("ID avant save: " + vehicule.getId());
+        
         Vehicule saved = vehiculeRepository.save(vehicule);
-        return vehiculeMapper.toDTO(saved);
+        System.out.println("Entité sauvegardée: " + saved);
+        System.out.println("ID après save: " + saved.getId());
+        
+        VehiculeDTO result = vehiculeMapper.toDTO(saved);
+        System.out.println("DTO retourné: " + result);
+        return result;
     }
 
     @Override
     public VehiculeDTO updateVehicule(String id, VehiculeDTO updatedDTO) {
-        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        Vehicule vehicule = vehiculeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Véhicule introuvable avec l'ID: " + id));
         vehicule.setMatricule(updatedDTO.getMatricule());
         vehicule.setCapaciteMax(updatedDTO.getCapaciteMax());
         vehicule.setDisponibilite(updatedDTO.isDisponibilite());
@@ -36,12 +57,16 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public void deleteVehicule(String id) {
+        if (!vehiculeRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Véhicule introuvable avec l'ID: " + id);
+        }
         vehiculeRepository.deleteById(id);
     }
 
     @Override
     public VehiculeDTO getVehiculeById(String id) {
-        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        Vehicule vehicule = vehiculeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Véhicule introuvable avec l'ID: " + id));
         return vehiculeMapper.toDTO(vehicule);
     }
 
@@ -55,7 +80,8 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public VehiculeDTO modifierDisponibilite(String id, boolean dispo) {
-        Vehicule vehicule = vehiculeRepository.findById(id).orElseThrow();
+        Vehicule vehicule = vehiculeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Véhicule introuvable avec l'ID: " + id));
         vehicule.setDisponibilite(dispo);
         Vehicule updated = vehiculeRepository.save(vehicule);
         return vehiculeMapper.toDTO(updated);

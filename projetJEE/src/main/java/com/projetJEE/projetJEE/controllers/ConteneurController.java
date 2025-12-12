@@ -18,7 +18,6 @@ import java.util.List;
 @RequestMapping("/api/conteneurs")
 @RequiredArgsConstructor
 @Tag(name = "Conteneurs", description = "Gestion des conteneurs et déchets")
-
 public class ConteneurController {
 
     private final ConteneurService conteneurService;
@@ -44,22 +43,31 @@ public class ConteneurController {
         return conteneurService.getAllConteneurs();
     }
 
-
     // Mettre à jour uniquement l'état de remplissage
     @Operation(summary = "Mettre à jour l'état de remplissage")
     @PutMapping("/{id}/etat")
     public ConteneurDTO updateEtat(@PathVariable String id, @RequestBody ConteneurDTO conteneurDTO) {
         return conteneurService.updateEtat(id);
     }
-    
-    
+
+    // Vider un conteneur
     @Operation(summary = "Vider un conteneur")
     @PostMapping("/{id}/vider")
-    public ResponseEntity<ConteneurDTO> viderConteneur(@PathVariable String id,@RequestBody ConteneurDTO dto) {
+    public ResponseEntity<ConteneurDTO> viderConteneur(@PathVariable String id, @RequestBody ConteneurDTO dto) {
         ConteneurDTO updated = conteneurService.viderConteneur(id, dto);
         return ResponseEntity.ok(updated);
     }
-    
+
+    // Marquer un conteneur comme vide (endpoint simplifié pour les agents)
+    @Operation(summary = "Marquer un conteneur comme vide")
+    @PutMapping("/{id}/empty")
+    public ResponseEntity<ConteneurDTO> markEmpty(@PathVariable String id) {
+        ConteneurDTO conteneur = conteneurService.getConteneurById(id);
+        ConteneurDTO updated = conteneurService.viderConteneur(id, conteneur);
+        return ResponseEntity.ok(updated);
+    }
+
+    // Ajouter un déchet dans un conteneur
     @PostMapping("/{id}/dechets")
     @Operation(summary = "Ajouter un déchet dans un conteneur")
     public ResponseEntity<ConteneurDTO> ajouterDechet(
@@ -69,7 +77,7 @@ public class ConteneurController {
         return ResponseEntity.ok(conteneurService.ajouterDechet(id, dto));
     }
 
-
+    // Ajouter un citoyen dans un conteneur
     @PostMapping("/{id}/citoyens")
     @Operation(summary = "Ajouter un citoyen dans un conteneur")
     public ResponseEntity<ConteneurDTO> ajouterCitoyen(
@@ -78,7 +86,11 @@ public class ConteneurController {
 
         return ResponseEntity.ok(conteneurService.ajouterCitoyen(id, dto));
     }
-
     
-
+ // Supprimer un conteneur
+    @Operation(summary = "Supprimer un conteneur")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable String id) {
+        conteneurService.deleteConteneur(id);
+    }
 }

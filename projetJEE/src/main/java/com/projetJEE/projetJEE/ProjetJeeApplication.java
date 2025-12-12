@@ -1,12 +1,15 @@
 package com.projetJEE.projetJEE;
 
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringApplication;	
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-public class ProjetJEEApplication {
-
+@EnableMongoRepositories
+@EnableScheduling
+public class ProjetJeeApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ProjetJEEApplication.class, args);
-    }
-}
+        SpringApplication.run(ProjetJeeApplication.class, args);
+
+}}

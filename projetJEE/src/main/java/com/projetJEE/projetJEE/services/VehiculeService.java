@@ -1,7 +1,6 @@
 package com.projetJEE.projetJEE.services;
 
 import com.projetJEE.projetJEE.dto.VehiculeDTO;
-import com.projetJEE.projetJEE.entities.Vehicule;
 import java.util.List;
 
 public interface VehiculeService {

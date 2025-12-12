@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConteneurDTO {
-
     private String id;
     private String localisation;
     private CouleurStatut couleurStatut;
@@ -22,4 +21,3 @@ public class ConteneurDTO {
     private List<DechetsDTO> dechets;
     private List<CitoyenDTO> citoyens;
 }
-

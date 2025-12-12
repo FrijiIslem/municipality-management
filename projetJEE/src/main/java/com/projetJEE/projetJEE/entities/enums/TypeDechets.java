@@ -6,5 +6,4 @@ public enum TypeDechets {
     organique,
     mixte,
     metals;
-
 }
