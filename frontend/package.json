@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "urbanova-frontend",
   "version": "1.0.0",
   "description": "Urbanova - Smart City Waste Management Frontend",

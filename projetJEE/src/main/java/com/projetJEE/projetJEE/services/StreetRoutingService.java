@@ -17,10 +17,10 @@ import java.util.Locale;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 
-/**
- * Service pour obtenir les routes réelles suivant les rues
- * Utilise OSRM (Open Source Routing Machine) pour calculer les itinéraires
- */
+
+// Service pour obtenir les routes réelles suivant les rues
+// Utilise OSRM (Open Source Routing Machine) pour calculer les itinéraires
+ 
 @Service
 public class StreetRoutingService {
 
@@ -41,14 +41,14 @@ public class StreetRoutingService {
         this.coordinateFormatter = new DecimalFormat("#.######", symbols);
     }
 
-    /**
-     * Obtient la route réelle entre deux points en suivant les rues
-     * @param lat1 Latitude du point de départ
-     * @param lng1 Longitude du point de départ
-     * @param lat2 Latitude du point d'arrivée
-     * @param lng2 Longitude du point d'arrivée
-     * @return Liste de points [lat, lng] représentant la route réelle
-     */
+    
+    // Obtient la route réelle entre deux points en suivant les rues
+     // @param lat1 Latitude du point de départ
+     //@param lng1 Longitude du point de départ
+     //@param lat2 Latitude du point d'arrivée
+     //@param lng2 Longitude du point d'arrivée
+     //@return Liste de points [lat, lng] représentant la route réelle
+     
     public List<double[]> getRouteBetweenPoints(double lat1, double lng1, double lat2, double lng2) {
         try {
             // Format OSRM: lng,lat (attention: OSRM utilise lng,lat et non lat,lng)

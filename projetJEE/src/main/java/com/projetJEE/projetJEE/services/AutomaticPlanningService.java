@@ -21,9 +21,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service pour la planification automatique des tournées
- */
 @Service
 public class AutomaticPlanningService {
 
@@ -118,7 +115,8 @@ public class AutomaticPlanningService {
                 logger.warn(message);
                 throw new PlanningException(message, "INVALID_ROUTE");
             }
-
+         // À ce stade, seul le véhicule et l’itinéraire optimisé sont connus.
+         // Le chauffeur et l’agence ne sont pas encore déterminés, donc on les passe à null.
             // 6. Créer la tournée (sans assigner les agents pour éviter les conflits)
             TourneeDto tourneeDto = createTourneeDto(vehicule, null, null, optimizedRoute);
             
@@ -178,9 +176,9 @@ public class AutomaticPlanningService {
         }
     }
 
-    /**
-     * Récupère les conteneurs qui nécessitent une collecte
-     */
+    
+    // Récupère les conteneurs qui nécessitent une collecte
+    
     private List<Conteneur> getConteneursToCollect() {
         List<Conteneur> allConteneurs = conteneurRepository.findAll();
         
@@ -192,9 +190,9 @@ public class AutomaticPlanningService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Sélectionne un véhicule disponible
-     */
+    
+  // Sélectionne un véhicule disponible
+  
     private Vehicule selectAvailableVehicule() {
         List<Vehicule> availableVehicules = vehiculeRepository.findAll().stream()
             .filter(Vehicule::isDisponibilite)
@@ -210,9 +208,9 @@ public class AutomaticPlanningService {
             .orElse(availableVehicules.get(0));
     }
 
-    /**
-     * Sélectionne N agents collecteurs disponibles
-     */
+    
+     //Sélectionne N agents collecteurs disponibles
+   
     private List<Agent> selectAvailableCollectors(int count) {
         List<Agent> availableCollectors = utilisateurRepository.findAll().stream()
             .filter(u -> u instanceof Agent)
@@ -229,9 +227,9 @@ public class AutomaticPlanningService {
         return availableCollectors.subList(0, Math.min(count, availableCollectors.size()));
     }
 
-    /**
-     * Sélectionne un agent chauffeur disponible
-     */
+    
+     // Sélectionne un agent chauffeur disponible
+    
     private Agent selectAvailableChauffeur() {
         return utilisateurRepository.findAll().stream()
             .filter(u -> u instanceof Agent)
@@ -241,11 +239,9 @@ public class AutomaticPlanningService {
             .findFirst()
             .orElse(null);
     }
-
-    /**
-     * Crée un DTO de tournée avec les informations sélectionnées
-     * Les agents peuvent être null si on veut les assigner après via affecterAgent
-     */
+  // Crée un DTO de tournée avec les informations sélectionnées
+//Les agents peuvent être null si on veut les assigner après via affecterAgent
+   
     private TourneeDto createTourneeDto(Vehicule vehicule, List<Agent> collecteurs, 
                                        Agent chauffeur, List<Conteneur> conteneurs) {
         // Convertir les conteneurs en DTOs
@@ -285,14 +281,15 @@ public class AutomaticPlanningService {
         return builder.build();
     }
 
-    /**
-     * Crée l'itinéraire JSON à partir de la liste de conteneurs
-     */
+    
+     //Crée l'itinéraire JSON à partir de la liste de conteneurs
+    
     private String createItineraireJson(List<Conteneur> conteneurs) {
         try {
             List<Map<String, Object>> route = new ArrayList<>();
             
             for (Conteneur conteneur : conteneurs) {
+            	//Une HashMap est une structure de données Java qui permet de stocker des informations sous forme de clé → valeur.
                 Map<String, Object> point = new HashMap<>();
                 point.put("conteneurId", conteneur.getId());
                 
@@ -330,9 +327,8 @@ public class AutomaticPlanningService {
         return null;
     }
 
-    /**
-     * Envoie une notification à l'admin avec les détails de la tournée
-     */
+    
+     //Envoie une notification à l'admin avec les détails de la tournée
     private void sendTourneeNotificationToAdmin(TourneeDto tournee, Vehicule vehicule, 
                                               List<Agent> collecteurs, Agent chauffeur,
                                               List<Conteneur> conteneurs) {
