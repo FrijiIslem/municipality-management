@@ -23,7 +23,16 @@ const CitoyenProfile = () => {
     ({ ancienPassword, data }) => citoyenAPI.update(ancienPassword, data),
     {
       onSuccess: (updatedUser) => {
-        toast.success('Profil mis à jour avec succès')
+        // If address changed, clear container ID to trigger reselection
+        const addressChanged = user?.adresse !== formData.adresse && formData.adresse
+        if (addressChanged && updatedUser.conteneurId) {
+          updatedUser.conteneurId = null
+          toast.success('Profil mis à jour. Veuillez sélectionner un nouveau conteneur sur le tableau de bord.', {
+            duration: 5000,
+          })
+        } else {
+          toast.success('Profil mis à jour avec succès')
+        }
         setUser(updatedUser)
         setIsEditing(false)
         queryClient.invalidateQueries('citoyens')

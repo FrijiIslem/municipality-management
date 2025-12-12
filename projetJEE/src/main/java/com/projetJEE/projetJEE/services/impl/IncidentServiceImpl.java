@@ -67,8 +67,10 @@ public class IncidentServiceImpl implements IncidentServiceInterface {
 
     @Override
     public Incident getIncidentById(String id) {
+
         return incidentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Incident introuvable pour l'id: " + id));
+
     }
 
     @Override

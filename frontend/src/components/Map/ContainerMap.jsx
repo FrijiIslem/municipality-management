@@ -149,9 +149,26 @@ const ContainerMap = ({
 
   const containerMarkers = containers
     .map((container) => {
+
+      // Debug: Log what we receive
+      if (containers.indexOf(container) === 0) {
+        console.log('ContainerMap: First container received:', {
+          id: container?.id,
+          localisationType: typeof container?.localisation,
+          localisation: container?.localisation,
+          isString: typeof container?.localisation === 'string'
+        })
+      }
+      
       const loc = parseLoc(container?.localisation);
       if (!loc) {
-        console.warn(`Conteneur ${container?.id} ignoré: localisation invalide`, container?.localisation);
+        console.warn(`Conteneur ${container?.id} ignoré: localisation invalide`, {
+          localisation: container?.localisation,
+          localisationType: typeof container?.localisation,
+          isString: typeof container?.localisation === 'string',
+          isObject: typeof container?.localisation === 'object' && container?.localisation !== null
+        });
+
         return null;
       }
       return {

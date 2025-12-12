@@ -5,12 +5,18 @@ import {
   Trash2, 
   Bell,
   User,
+
+  Calendar,
+
   LogOut 
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
 
 const menuItems = [
   { path: '/citoyen', icon: LayoutDashboard, label: 'Tableau de bord' },
+
+  { path: '/citoyen/calendar', icon: Calendar, label: 'Calendrier des collectes' },
+
   { path: '/citoyen/incidents', icon: AlertTriangle, label: 'Signaler un incident' },
   { path: '/citoyen/containers', icon: Trash2, label: 'Conteneurs proches' },
   { path: '/citoyen/notifications', icon: Bell, label: 'Notifications' },

@@ -29,6 +29,9 @@ import CitoyenContainers from './pages/citoyen/CitoyenContainers'
 import CitoyenNotifications from './pages/citoyen/CitoyenNotifications'
 import CitoyenProfile from './pages/citoyen/CitoyenProfile'
 
+import CitoyenCalendar from './pages/citoyen/CitoyenCalendar'
+
+
 
 
 
@@ -37,7 +40,9 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<Home />} />
+
       <Route path="/home" element={<Home />} />
+
       <Route path="/register" element={<Register />} />
       
       {/* Agent routes */}
@@ -67,6 +72,9 @@ function App() {
         <Route path="incidents" element={<CitoyenIncidents />} />
         <Route path="containers" element={<CitoyenContainers />} />
         <Route path="notifications" element={<CitoyenNotifications />} />
+
+        <Route path="calendar" element={<CitoyenCalendar />} />
+
         <Route path="profile" element={<CitoyenProfile />} />
       </Route>
     </Routes>

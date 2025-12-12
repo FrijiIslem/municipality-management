@@ -22,8 +22,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.projetJEE.projetJEE.exceptions.ResourceNotFoundException;
 
@@ -274,6 +276,7 @@ public class TourneeServiceImpl implements TourneeService {
                 .average()
                 .orElse(0.0);
     }
+
 
 
     @Override

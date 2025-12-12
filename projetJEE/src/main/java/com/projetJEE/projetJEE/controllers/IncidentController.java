@@ -56,6 +56,7 @@ public class IncidentController {
         return incidentService.creeIncident(dto);
     }
 
+
     // Mettre à jour le statut d'un incident
     @PutMapping("/{id}/statut")
     public Incident updateStatut(
@@ -64,5 +65,6 @@ public class IncidentController {
     ) {
         return incidentService.updateStatut(id, statut);
     }
+
 
 }

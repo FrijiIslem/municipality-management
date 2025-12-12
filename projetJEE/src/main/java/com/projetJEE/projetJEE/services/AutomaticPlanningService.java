@@ -1,25 +1,36 @@
 package com.projetJEE.projetJEE.services;
 
-import com.projetJEE.projetJEE.dto.TourneeDto;
-import com.projetJEE.projetJEE.entities.*;
-import com.projetJEE.projetJEE.entities.enums.EtatRemplissage;
-import com.projetJEE.projetJEE.entities.enums.EtatTournee;
-import com.projetJEE.projetJEE.entities.enums.TypeNotification;
-import com.projetJEE.projetJEE.mapper.AgentMapper;
-import com.projetJEE.projetJEE.repository.*;
-import com.projetJEE.projetJEE.services.impl.NotificationServiceImpl;
-import com.projetJEE.projetJEE.dto.NotificationDto;
-import com.projetJEE.projetJEE.exceptions.PlanningException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+//En haut du fichier, assurez-vous d'avoir ces imports
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.projetJEE.projetJEE.dto.NotificationDto;
+import com.projetJEE.projetJEE.dto.TourneeDto;
+import com.projetJEE.projetJEE.entities.Agent;
+import com.projetJEE.projetJEE.entities.Conteneur;
+import com.projetJEE.projetJEE.entities.Vehicule;
+import com.projetJEE.projetJEE.entities.enums.EtatRemplissage;
+import com.projetJEE.projetJEE.entities.enums.EtatTournee;
+import com.projetJEE.projetJEE.entities.enums.TypeNotification;
+import com.projetJEE.projetJEE.exceptions.PlanningException;
+import com.projetJEE.projetJEE.mapper.AgentMapper;
+import com.projetJEE.projetJEE.repository.ConteneurRepository;
+import com.projetJEE.projetJEE.repository.TourneeRepository;
+import com.projetJEE.projetJEE.repository.UtilisateurRepository;
+import com.projetJEE.projetJEE.repository.VehiculeRepository;
+
 
 @Service
 public class AutomaticPlanningService {
@@ -117,6 +128,7 @@ public class AutomaticPlanningService {
             }
          // À ce stade, seul le véhicule et l’itinéraire optimisé sont connus.
          // Le chauffeur et l’agence ne sont pas encore déterminés, donc on les passe à null.
+
             // 6. Créer la tournée (sans assigner les agents pour éviter les conflits)
             TourneeDto tourneeDto = createTourneeDto(vehicule, null, null, optimizedRoute);
             
@@ -176,9 +188,11 @@ public class AutomaticPlanningService {
         }
     }
 
+
     
     // Récupère les conteneurs qui nécessitent une collecte
     
+
     private List<Conteneur> getConteneursToCollect() {
         List<Conteneur> allConteneurs = conteneurRepository.findAll();
         
@@ -190,7 +204,6 @@ public class AutomaticPlanningService {
             .collect(Collectors.toList());
     }
 
-    
   // Sélectionne un véhicule disponible
   
     private Vehicule selectAvailableVehicule() {
@@ -208,9 +221,9 @@ public class AutomaticPlanningService {
             .orElse(availableVehicules.get(0));
     }
 
-    
      //Sélectionne N agents collecteurs disponibles
    
+
     private List<Agent> selectAvailableCollectors(int count) {
         List<Agent> availableCollectors = utilisateurRepository.findAll().stream()
             .filter(u -> u instanceof Agent)
@@ -227,7 +240,6 @@ public class AutomaticPlanningService {
         return availableCollectors.subList(0, Math.min(count, availableCollectors.size()));
     }
 
-    
      // Sélectionne un agent chauffeur disponible
     
     private Agent selectAvailableChauffeur() {
@@ -283,7 +295,6 @@ public class AutomaticPlanningService {
 
     
      //Crée l'itinéraire JSON à partir de la liste de conteneurs
-    
     private String createItineraireJson(List<Conteneur> conteneurs) {
         try {
             List<Map<String, Object>> route = new ArrayList<>();
@@ -327,8 +338,10 @@ public class AutomaticPlanningService {
         return null;
     }
 
+
     
      //Envoie une notification à l'admin avec les détails de la tournée
+
     private void sendTourneeNotificationToAdmin(TourneeDto tournee, Vehicule vehicule, 
                                               List<Agent> collecteurs, Agent chauffeur,
                                               List<Conteneur> conteneurs) {

@@ -20,7 +20,7 @@ import java.text.DecimalFormatSymbols;
 
 // Service pour obtenir les routes réelles suivant les rues
 // Utilise OSRM (Open Source Routing Machine) pour calculer les itinéraires
- 
+
 @Service
 public class StreetRoutingService {
 
@@ -41,7 +41,7 @@ public class StreetRoutingService {
         this.coordinateFormatter = new DecimalFormat("#.######", symbols);
     }
 
-    
+
     // Obtient la route réelle entre deux points en suivant les rues
      // @param lat1 Latitude du point de départ
      //@param lng1 Longitude du point de départ
