@@ -15,14 +15,18 @@ const Dashboard = () => {
     () => role === 'ADMIN' ? tourAPI.getAll() : (user?.id ? tourAPI.getByAgent(user.id) : Promise.resolve([]))
   )
   const { data: containers = [] } = useQuery('containers', containerAPI.getAll)
-  const destination = role === 'CHAUFFEUR'
-    ? 'chauffeur'
-    : (role === 'RAMASSEUR' || role === 'AGENT_RAMSSEUR')
-      ? 'ramasseur'
-      : 'agent'
+  
+  // Récupérer les notifications par ID utilisateur (le backend utilise l'ID comme destination)
   const { data: notifications = [] } = useQuery(
-    ['unreadNotifications', destination, user?.id || 'anon'],
-    () => notificationAPI.getUnreadFor(destination)
+    ['unreadNotifications', user?.id || 'anon'],
+    () => {
+      if (!user?.id) return Promise.resolve([])
+      // Le backend envoie les notifications avec destination = agent.getId()
+      return notificationAPI.getByDestination(user.id).then(data => 
+        Array.isArray(data) ? data.filter(n => !n.lu) : []
+      )
+    },
+    { enabled: !!user?.id }
   )
 
   const activeTours = (Array.isArray(tours) ? tours : []).filter(t => t.etat === 'EN_COURS' || t.etat === 'ENCOURS')
@@ -134,6 +138,67 @@ const Dashboard = () => {
       {/* Active Tours */}
       {showIncidentModal && (
         <IncidentModal onClose={() => setShowIncidentModal(false)} />
+      )}
+
+      {/* Notifications Section */}
+      {notifications.length > 0 && (
+        <div className="card border-l-4 border-l-eco-green">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-eco-green bg-opacity-10 rounded-lg flex items-center justify-center">
+                <Bell className="w-5 h-5 text-eco-green" />
+              </div>
+              <div>
+                <h2 className="text-xl font-heading font-semibold text-anthracite">
+                  Notifications récentes
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {notifications.length} notification(s) non lue(s)
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/app/notifications"
+              className="text-eco-green hover:underline text-sm font-medium flex items-center gap-1"
+            >
+              Voir tout
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          
+          <div className="space-y-3">
+            {notifications.slice(0, 3).map((notification) => (
+              <div
+                key={notification.id}
+                className="p-4 bg-eco-green bg-opacity-5 border border-eco-green border-opacity-20 rounded-lg hover:bg-opacity-10 transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-eco-green mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-anthracite mb-1">
+                      {notification.titre || 'Nouvelle notification'}
+                    </p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      {notification.message || notification.contenu}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {notification.dateEnvoi || notification.dateCreation
+                        ? new Date(notification.dateEnvoi || notification.dateCreation).toLocaleString('fr-FR', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Date inconnue'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="card">

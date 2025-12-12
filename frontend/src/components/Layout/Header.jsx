@@ -5,19 +5,18 @@ import { notificationAPI } from '../../services/api'
 import useAuthStore from '../../store/authStore'
 
 const Header = () => {
-  const { role } = useAuthStore()
-  const destination = role === 'CHAUFFEUR'
-    ? 'chauffeur'
-    : (role === 'RAMASSEUR' || role === 'AGENT_RAMSSEUR')
-      ? 'ramasseur'
-      : 'agent'
+  const { user } = useAuthStore()
 
   const { data: unreadCount = 0 } = useQuery(
-    ['unreadNotifications', destination],
-    () => notificationAPI.getUnreadFor(destination),
+    ['unreadNotifications', user?.id || 'anon'],
+    () => {
+      if (!user?.id) return Promise.resolve([])
+      return notificationAPI.getUnreadFor(user.id)
+    },
     {
       select: (data) => data?.length || 0,
       refetchInterval: 30000, // Refresh every 30 seconds
+      enabled: !!user?.id,
     }
   )
 
