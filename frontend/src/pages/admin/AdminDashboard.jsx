@@ -50,25 +50,36 @@ const AdminDashboard = () => {
   // Données pour les graphiques
   const chartData = useMemo(() => {
     // 1. Évolution des tournées sur les 7 derniers jours
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i)
-      return {
-        date: format(date, 'dd/MM'),
-        fullDate: startOfDay(date),
-        tours: 0
-      }
-    })
+    const Ftours = [
+    { dateCreation: new Date() },                     // today
+    { dateCreation: new Date() },                     // today
+    { dateCreation: subDays(new Date(), 1) },         // yesterday
+    { dateCreation: subDays(new Date(), 2) },
+    { dateCreation: subDays(new Date(), 2) },
+    { dateCreation: subDays(new Date(), 3) },
+    { dateCreation: subDays(new Date(), 5) },
+    { dateCreation: subDays(new Date(), 6) }
+  ]
 
-    tours.forEach(tour => {
-      const tourDate = tour.dateCreation || tour.datePlanification
-      if (tourDate) {
-        const date = startOfDay(new Date(tourDate))
-        const dayData = last7Days.find(d => isSameDay(d.fullDate, date))
-        if (dayData) {
-          dayData.tours++
-        }
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i)
+    return {
+      date: format(date, 'dd/MM'),
+      fullDate: startOfDay(date),
+      tours: 0
+    }
+  })
+
+  Ftours.forEach(tour => {
+    const tourDate = tour.dateCreation || tour.datePlanification
+    if (tourDate) {
+      const date = startOfDay(new Date(tourDate))
+      const dayData = last7Days.find(d => isSameDay(d.fullDate, date))
+      if (dayData) {
+        dayData.tours++
       }
-    })
+    }
+  })
 
     // 2. Répartition des états de conteneurs
     const containerStates = {
@@ -105,8 +116,8 @@ const AdminDashboard = () => {
     const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     const toursByWeekDay = weekDays.map(day => ({ day, count: 0 }))
 
-    tours.forEach(tour => {
-      const tourDate = tour.dateCreation || tour.datePlanification
+    Ftours.forEach(Ftour => {
+      const tourDate = Ftour.dateCreation || Ftour.datePlanification
       if (tourDate) {
         const date = new Date(tourDate)
         const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1 // Convertir dimanche (0) en 6
