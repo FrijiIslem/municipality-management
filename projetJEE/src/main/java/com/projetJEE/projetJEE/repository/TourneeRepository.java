@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface TourneeRepository extends MongoRepository<Tournee, String> {
     List<Tournee> findByEtat(EtatTournee etatTournee);
     List<Tournee> findByAgentChauffeurId(String agentId);
-    List<Tournee> findByAgentRamasseursId(String agentId);
-    Optional<Tournee> findByAgentChauffeur_IdAndEtat(String agentId, EtatTournee etat);
+    List<Tournee> findByAgentRamasseursIdsContaining(String agentId);
+    Optional<Tournee> findByAgentChauffeurIdAndEtat(String agentId, EtatTournee etat);
     }
 

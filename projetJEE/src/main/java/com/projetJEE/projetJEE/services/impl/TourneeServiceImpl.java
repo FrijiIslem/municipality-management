@@ -81,8 +81,8 @@ public class TourneeServiceImpl implements TourneeService {
         return tourneeRepository.findById(id).map(tournee -> {
             Tournee source = tourneeMapper.toEntity(tourneeDto);
             tournee.setConteneurs(source.getConteneurs());
-            tournee.setAgentChauffeur(source.getAgentChauffeur());
-            tournee.setAgentRamasseurs(source.getAgentRamasseurs());
+            tournee.setAgentChauffeurId(source.getAgentChauffeurId());
+            tournee.setAgentRamasseursIds(source.getAgentRamasseursIds());
             tournee.setDateDebut(tourneeDto.getDateDebut());
             tournee.setDateFin(tourneeDto.getDateFin());
             tournee.setItineraire(tourneeDto.getItineraire());
@@ -121,10 +121,10 @@ public class TourneeServiceImpl implements TourneeService {
             );
             
             // Notifier le chauffeur
-            if (tournee.getAgentChauffeur() != null) {
+            if (tournee.getAgentChauffeurId() != null) {
                 NotificationDto notification = NotificationDto.builder()
                     .dateEnvoi(LocalDateTime.now())
-                    .destination(tournee.getAgentChauffeur().getId())
+                    .destination(tournee.getAgentChauffeurId())
                     .message(message)
                     .type(TypeNotification.REMINDER)
                     .build();
@@ -132,11 +132,11 @@ public class TourneeServiceImpl implements TourneeService {
             }
             
             // Notifier les ramasseurs
-            if (tournee.getAgentRamasseurs() != null) {
-                for (Agent ramasseur : tournee.getAgentRamasseurs()) {
+            if (tournee.getAgentRamasseursIds() != null && !tournee.getAgentRamasseursIds().isEmpty()) {
+                for (String ramasseurId : tournee.getAgentRamasseursIds()) {
                     NotificationDto notification = NotificationDto.builder()
                         .dateEnvoi(LocalDateTime.now())
-                        .destination(ramasseur.getId())
+                        .destination(ramasseurId)
                         .message(message)
                         .type(TypeNotification.REMINDER)
                         .build();
@@ -159,13 +159,25 @@ public class TourneeServiceImpl implements TourneeService {
         tournee.setDateFin(LocalDateTime.now());
 
         // Libérer les ressources (remettre les agents et véhicule en disponible)
-        if (tournee.getAgentChauffeur() != null) {
-            tournee.getAgentChauffeur().setDisponibilite(true);
+        if (tournee.getAgentChauffeurId() != null) {
+            utilisateurRepository.findById(tournee.getAgentChauffeurId())
+                    .filter(u -> u instanceof Agent)
+                    .map(u -> (Agent) u)
+                    .ifPresent(agent -> {
+                        agent.setDisponibilite(true);
+                        utilisateurRepository.save(agent);
+                    });
         }
 
-        if (tournee.getAgentRamasseurs() != null) {
-            tournee.getAgentRamasseurs().forEach(agent -> {
-                agent.setDisponibilite(true);
+        if (tournee.getAgentRamasseursIds() != null && !tournee.getAgentRamasseursIds().isEmpty()) {
+            tournee.getAgentRamasseursIds().forEach(agentId -> {
+                utilisateurRepository.findById(agentId)
+                        .filter(u -> u instanceof Agent)
+                        .map(u -> (Agent) u)
+                        .ifPresent(agent -> {
+                            agent.setDisponibilite(true);
+                            utilisateurRepository.save(agent);
+                        });
             });
         }
 
@@ -194,17 +206,23 @@ public class TourneeServiceImpl implements TourneeService {
         }
 
         if (agent.getTache() == Agent.TypeTache.CHAUFFEUR) {
-            if (tournee.getAgentChauffeur() != null) {
-                tournee.getAgentChauffeur().setDisponibilite(true);
-                utilisateurRepository.save(tournee.getAgentChauffeur());
+            // Libérer l'ancien chauffeur s'il existe
+            if (tournee.getAgentChauffeurId() != null) {
+                utilisateurRepository.findById(tournee.getAgentChauffeurId())
+                        .filter(u -> u instanceof Agent)
+                        .map(u -> (Agent) u)
+                        .ifPresent(oldChauffeur -> {
+                            oldChauffeur.setDisponibilite(true);
+                            utilisateurRepository.save(oldChauffeur);
+                        });
             }
-            tournee.setAgentChauffeur(agent);
+            tournee.setAgentChauffeurId(agent.getId());
             agent.setDisponibilite(false);
         } else if (agent.getTache() == Agent.TypeTache.COLLECTE) {
-            List<Agent> collectors = tournee.getAgentRamasseurs() != null ? new ArrayList<>(tournee.getAgentRamasseurs()) : new ArrayList<>();
-            if (collectors.size() < 2) {
-                collectors.add(agent);
-                tournee.setAgentRamasseurs(collectors);
+            List<String> collectorsIds = tournee.getAgentRamasseursIds() != null ? new ArrayList<>(tournee.getAgentRamasseursIds()) : new ArrayList<>();
+            if (collectorsIds.size() < 2) {
+                collectorsIds.add(agent.getId());
+                tournee.setAgentRamasseursIds(collectorsIds);
                 agent.setDisponibilite(false);
                 System.out.println("=== DEBUG: Agent collecteur " + agent.getId() + " marqué comme indisponible ===");
             } else {
@@ -254,7 +272,7 @@ public class TourneeServiceImpl implements TourneeService {
     public List<TourneeDto> getTourneesByAgent(String agentId) {
         // Récupérer toutes les tournées de l'agent (en tant que chauffeur ou ramasseur)
         List<Tournee> tourneesChauffeur = tourneeRepository.findByAgentChauffeurId(agentId);
-        List<Tournee> tourneesRamasseur = tourneeRepository.findByAgentRamasseursId(agentId);
+        List<Tournee> tourneesRamasseur = tourneeRepository.findByAgentRamasseursIdsContaining(agentId);
         
         // Fusionner les listes et supprimer les doublons
         Set<Tournee> tourneesUniques = new HashSet<>();
@@ -314,15 +332,25 @@ public class TourneeServiceImpl implements TourneeService {
         tournee.setDateFin(LocalDateTime.now());
 
         // Libérer les ressources (remettre les agents et véhicule en disponible)
-        if (tournee.getAgentChauffeur() != null) {
-            tournee.getAgentChauffeur().setDisponibilite(true);
-            utilisateurRepository.save(tournee.getAgentChauffeur());
+        if (tournee.getAgentChauffeurId() != null) {
+            utilisateurRepository.findById(tournee.getAgentChauffeurId())
+                    .filter(u -> u instanceof Agent)
+                    .map(u -> (Agent) u)
+                    .ifPresent(chauffeur -> {
+                        chauffeur.setDisponibilite(true);
+                        utilisateurRepository.save(chauffeur);
+                    });
         }
 
-        if (tournee.getAgentRamasseurs() != null) {
-            for (Agent ramasseur : tournee.getAgentRamasseurs()) {
-                ramasseur.setDisponibilite(true);
-                utilisateurRepository.save(ramasseur);
+        if (tournee.getAgentRamasseursIds() != null && !tournee.getAgentRamasseursIds().isEmpty()) {
+            for (String ramasseurId : tournee.getAgentRamasseursIds()) {
+                utilisateurRepository.findById(ramasseurId)
+                        .filter(u -> u instanceof Agent)
+                        .map(u -> (Agent) u)
+                        .ifPresent(ramasseur -> {
+                            ramasseur.setDisponibilite(true);
+                            utilisateurRepository.save(ramasseur);
+                        });
             }
         }
 

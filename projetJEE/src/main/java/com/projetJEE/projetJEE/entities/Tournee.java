@@ -9,9 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import com.projetJEE.projetJEE.entities.enums.EtatTournee;
-
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -29,12 +27,14 @@ public class Tournee {
     @Id 
     private String id;
     private List<Conteneur> conteneurs;
-    @DBRef
+    
+    // Référence par ObjectId simple (meilleure pratique NoSQL)
     @Builder.Default
-    private Agent agentChauffeur = null;
-    @DBRef
+    private String agentChauffeurId = null;
+    
+    // Référence par ObjectId simple (meilleure pratique NoSQL)
     @Builder.Default
-    private List<Agent> agentRamasseurs = new ArrayList<>();
+    private List<String> agentRamasseursIds = new ArrayList<>();
 
     private LocalDateTime dateDebut;
     private String itineraire;

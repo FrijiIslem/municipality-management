@@ -290,7 +290,7 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		 * Agent agent = agentOpt.get();
 		 * 
 		 * // Trouver la tournée planifiée pour ce chauffeur Optional<Tournee>
-		 tourneeOpt = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 tourneeOpt = tourneeRepository.findByAgentChauffeurIdAndEtat(agent.getId(),
 		 EtatTournee.PLANIFIEE);
 		 * 
 		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
@@ -315,7 +315,7 @@ public class UtilisateurServiceImpl implements UtilisateurServiceInterface {
 		 * Agent agent = agentOpt.get();
 		 * 
 		 * // Trouver la tournée en cours pour ce chauffeur Optional<Tournee> tourneeOpt
-		 * = tourneeRepository.findByAgentChauffeur_IdAndEtat(agent.getId(),
+		 * = tourneeRepository.findByAgentChauffeurIdAndEtat(agent.getId(),
 		 * EtatTournee.ENCOURS);
 		 * 
 		 * if (tourneeOpt.isPresent()) { Tournee tournee = tourneeOpt.get();
