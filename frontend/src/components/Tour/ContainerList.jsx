@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from 'react-query'
 import { containerAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
@@ -54,15 +55,50 @@ const getFillStateIcon = (etat) => {
   return icons[key] || icons[etat] || '🗑️'
 }
 
-const ContainerList = ({ containers = [], tourId, isActive = false }) => {
+const ContainerList = ({ containers = [], tourId, isActive = false, tourState = null }) => {
   const queryClient = useQueryClient()
+  // État local pour gérer les conteneurs vidés (retirés de la liste)
+  const [emptiedContainers, setEmptiedContainers] = useState(new Set())
+
+  // Filtrer les conteneurs vides et ceux déjà vidés
+  const visibleContainers = containers.filter(container => {
+    if (!container) return false
+    // Retirer les conteneurs déjà vidés
+    if (emptiedContainers.has(container.id)) return false
+    // Retirer les conteneurs déjà vides
+    const etat = container?.etatRemplissage?.toLowerCase()
+    return etat !== 'vide' && etat !== 'VIDE'
+  })
+
+  // Vérifier que la tournée est en cours (EN_COURS ou ENCOURS)
+  const canEmptyContainers = isActive && (tourState === 'EN_COURS' || tourState === 'ENCOURS')
 
   const markEmptyMutation = useMutation(
     (containerId) => containerAPI.markEmpty(containerId),
     {
-      onSuccess: () => {
+      onSuccess: (updatedContainer, containerId) => {
         toast.success('Conteneur marqué comme vide')
-        // Invalider toutes les requêtes liées pour mettre à jour la carte et la liste
+        // Ajouter le conteneur à la liste des conteneurs vidés pour le retirer immédiatement
+        setEmptiedContainers(prev => new Set([...prev, containerId]))
+        
+        // Mettre à jour immédiatement les données de la tournée pour synchroniser la carte
+        queryClient.setQueryData(['tour', tourId], (oldTour) => {
+          if (!oldTour || !oldTour.conteneurs) return oldTour
+          // Retirer le conteneur vidé de la liste ou le marquer comme vide
+          const updatedContainers = oldTour.conteneurs
+            .map(c => c.id === containerId ? updatedContainer : c)
+            .filter(c => {
+              // Retirer les conteneurs vides
+              const etat = c?.etatRemplissage?.toLowerCase()
+              return etat !== 'vide' && etat !== 'VIDE'
+            })
+          return {
+            ...oldTour,
+            conteneurs: updatedContainers
+          }
+        })
+        
+        // Invalider toutes les requêtes liées pour mettre à jour les autres vues
         queryClient.invalidateQueries(['tour', tourId])
         queryClient.invalidateQueries(['tour-route', tourId])
         queryClient.invalidateQueries('containers')
@@ -78,16 +114,18 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
     <div className="card">
       <div className="mb-4">
         <h2 className="text-xl font-heading font-semibold text-anthracite mb-1">
-          Conteneurs ({containers.length})
+          Conteneurs ({visibleContainers.length})
         </h2>
         <p className="text-sm text-gray-600">
-          Liste des conteneurs de la tournée
+          {canEmptyContainers 
+            ? 'Liste des conteneurs à vider' 
+            : 'Liste des conteneurs de la tournée'}
         </p>
       </div>
 
       <div className="space-y-2 max-h-[600px] overflow-y-auto">
-        {containers.length > 0 ? (
-          containers.map((container) => {
+        {visibleContainers.length > 0 ? (
+          visibleContainers.map((container) => {
             if (!container) return null
 
             return (
@@ -121,7 +159,7 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
                   </span>
                 </div>
 
-                {isActive && container?.etatRemplissage && 
+                {canEmptyContainers && container?.etatRemplissage && 
                  container.etatRemplissage.toLowerCase() !== 'vide' && 
                  container.etatRemplissage !== 'VIDE' && (
                   <button
@@ -140,6 +178,13 @@ const ContainerList = ({ containers = [], tourId, isActive = false }) => {
                     <CheckCircle className="w-4 h-4" />
                     Marquer comme vide
                   </button>
+                )}
+                {!canEmptyContainers && container?.etatRemplissage && 
+                 container.etatRemplissage.toLowerCase() !== 'vide' && 
+                 container.etatRemplissage !== 'VIDE' && (
+                  <div className="w-full mt-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm text-center">
+                    Démarrez la tournée pour vider les conteneurs
+                  </div>
                 )}
               </div>
             )

@@ -216,7 +216,12 @@ const TourDetail = () => {
             </div>
             <div className="h-[600px]">
               <TourMap
-                containers={tour.conteneurs || []}
+                containers={(tour.conteneurs || []).filter(c => {
+                  // Filtrer les conteneurs vides pour ne pas les afficher sur la carte
+                  if (!c) return false
+                  const etat = c?.etatRemplissage?.toLowerCase()
+                  return etat !== 'vide' && etat !== 'VIDE'
+                })}
                 route={route}
                 itineraire={tour.itineraire} // Passer l'itinéraire JSON optimisé
                 center={mapCenter}
@@ -232,6 +237,7 @@ const TourDetail = () => {
             containers={tour.conteneurs || []}
             tourId={tour.id}
             isActive={isActive}
+            tourState={tour.etat}
           />
         </div>
       </div>
